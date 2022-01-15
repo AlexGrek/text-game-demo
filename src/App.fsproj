@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="index.html" />
+    <Compile Include="Utils.fs" />
+    <Compile Include="Extensions.fs" />
+    <Compile Include="Data.fs" />
+    <Compile Include="State.fs" />
+    <Compile Include="RichText.fs" />
+    <Compile Include="Props.fs" />
+    <Compile Include="Actions.fs" />
+    <Compile Include="Dialog.fs" />
+    <Compile Include="Engine.fs" />
+    <Compile Include="DSL.fs" />
+    <Compile Include="Facts.fs" />
+    <Compile Include="NPC.fs" />
+    <Compile Include="StoryWriter.fs" />
+    <Compile Include="Game/GameDvaFacts.fs" />
+    <Compile Include="GameDvaCharacters.fs" />
+    <Compile Include="Game\GameChapter2.fs" />
+    <Compile Include="Game/Game.fs" />
+    <Compile Include="Game/GameDva.fs" />
+    <Compile Include="Serialization.fs" />
+    <Compile Include="UserInterface/RichTextRenderer.fs" />
+    <Compile Include="UserInterface\DialogTextRenderer.fs" />
+    <Compile Include="UiUtils.fs" />
+    <Compile Include="FactsRenderer.fs" />
+    <Compile Include="UserInterface\DevTools.fs" />
+    <Compile Include="UserInterface\Components.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Remoting.Json" Version="2.20.0" />
+    <PackageReference Include="Fable.SimpleJson" Version="3.21.0" />
+    <PackageReference Include="Feliz" Version="1.52.0" />
+    <PackageReference Include="Feliz.Router" Version="3.8.0" />
+    <PackageReference Include="Fable.DateFunctions" Version="3.7.0" />
+  </ItemGroup>
+</Project>
