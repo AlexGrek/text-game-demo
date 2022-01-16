@@ -11,6 +11,7 @@ open Fable.SimpleJson
 open Fable.Core
 open Fable.Core.JS
 open FactsRenderer
+open LocationHub
 
 type AnimationProgress =
     | NoAnimation
@@ -46,17 +47,32 @@ type Components() =
                     GameState = s
                     Animation = NoAnimation }
 
-        Html.div [ prop.className "main-div"
-                   prop.children [ Components.PopupPanel(state, setState)
-                                   Components.HeaderPanel(state, setState)
-                                   Components.DialogWindowView(
+        let uiWidgetToRender =
+            match state.GameState.UI with
+            | DialogMode (dm) -> 
+                Components.DialogWindowView(
                                        (Engine.lookupCurrentDialogWindow state.GameState),
                                        state,
                                        state.Animation,
                                        setState,
                                        setGameState
                                    )
+            | LocationHubMode (hub) ->
+                Components.LocationHubView(
+                    (Engine.lookupCurrentLocation state.GameState)
+                    state,
+                    state.Animation,
+                    setState,
+                    setGameState
+                )
+
+
+        Html.div [ prop.className "main-div"
+                   prop.children [ Components.PopupPanel(state, setState)
+                                   Components.HeaderPanel(state, setState)
+                                   uiWidgetToRender
                                    (DevTools.Components.DevToolsToolbar(state.DevTools, state.GameState, setGameState)) ] ]
+
 
     [<ReactComponent>]
     static member HeaderPanel(s: GlobalState, ss: GlobalState -> unit) =
@@ -89,6 +105,48 @@ type Components() =
                                    FactsPanelRenderer.FactsPanel(Seq.toList s.GameState.KnownFacts) ] ]
 
 
+    [<ReactComponent>]
+    static member LocationHubView 
+        ( 
+            loc: LocationHub,
+            s: GlobalState,
+            a: AnimationProgress,
+            setstate: GlobalState -> unit,
+            setgs 
+        ) =
+        let animation =
+            match s.Animation with
+            | NoAnimation -> "animate__animated animate__fadeInLeft animate__faster"
+            | VariantChosen (_) -> "animate__animated animate__fadeOutRight"
+
+        let renderVariant (el: DialogVariant) =
+            match (el.IsLocked s.GameState) with
+            | Unlocked -> Some(Components.DialogButton, el)
+            | Reason (_) -> Some(Components.LockedDialogButton, el)
+            | Hidden -> None
+
+        Html.div [
+            prop.className "location-hub-window dialog-window"
+            prop.children [
+                DialogTextComponents.DialogtextRenderer(
+                                       animation,
+                                       loc.Description,
+                                       s.GameState,
+                                       s.GameState.Iteration
+                                   )
+                Html.div [ 
+                    prop.className "variants"
+                    prop.children (
+                        List.choose renderVariant (loc.Variants s.GameState) 
+                            |> List.mapi (fun i (render, d) ->
+                                                      render (d, s, a, setstate, setgs, i))
+                            @ [ 
+                                    Html.div [ prop.innerHtml "add" ]
+                                ])
+                ]
+            ]
+        ]
+        
 
     [<ReactComponent>]
     static member DialogWindowView
@@ -123,7 +181,9 @@ type Components() =
                                                   List.choose render (w.Variants s.GameState)
                                                   |> List.mapi (fun i (render, d) ->
                                                       render (d, s, a, setstate, setgs, i))
-                                              ) ] ] ]
+                                              ) ]
+                    ] 
+        ]
 
 
     [<ReactComponent>]

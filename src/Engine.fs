@@ -3,10 +3,12 @@ module Engine
 open State
 open Data
 open Dialog
+open LocationHub
 
 let lookupCurrentDialogWindow s =
     let getFromUi = function
     | DialogMode d -> (d.Reference)
+    | s -> failwith (sprintf "Cannot get current dialog window while in %A" s)
     let reference = getFromUi s.UI
     let dialog = Data.getGlobal<Dialog> REPO_DIALOG reference.D
     if (Map.containsKey reference.W >> not) dialog.DialogWindows then
@@ -15,6 +17,14 @@ let lookupCurrentDialogWindow s =
                             reference.D
                             (Map.toList dialog.DialogWindows |> List.map fst)
     dialog.DialogWindows.[reference.W]
+
+let lookupCurrentLocation s =
+    let getFromUi = function
+    | LocationHubMode l -> (l.LocReference)
+    | s -> failwith (sprintf "Cannot get current location window while in %A" s)
+    let reference = getFromUi s
+    getGlobal<LocationHub.LocationHub> REPO_LOCATIONS reference
+    
 
 let executeCurrentDialogWindow s =
     let dialogWindow = lookupCurrentDialogWindow s

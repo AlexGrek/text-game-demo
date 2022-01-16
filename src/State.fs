@@ -1,11 +1,13 @@
 module State
 
 open Data
-open System.Runtime
 
 type DialogState = { Reference: UReference }
+type LocationHubState = { LocReference: string }
 
-type UiState = DialogMode of DialogState
+type UiState = 
+    | DialogMode of DialogState
+    | LocationHubMode of LocationHubState
 
 type IGameData =
     abstract Stringify : unit -> string
@@ -31,11 +33,12 @@ let makeInitialStateInDialog (r: UReference) =
 let currentDialogRef s =
     match s.UI with
     | DialogMode (ds) -> ds.Reference.D
-// | _ -> ""
+    | s -> failwith <| sprintf "cannot get current dialog ref while in %A" s
 
 let private changeUIDialogWindow refs =
     function
     | DialogMode (ds) -> DialogMode({ ds with Reference = { ds.Reference with W = refs } })
+    | LocationHubMode (_) -> failwith "cannot move to dialog window while in location hub"
 
 let private setUIDialog d w =
     DialogMode({ Reference = { W = w; D = d } })

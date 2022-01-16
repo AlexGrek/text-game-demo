@@ -12,6 +12,7 @@
     <Compile Include="Props.fs" />
     <Compile Include="Actions.fs" />
     <Compile Include="Dialog.fs" />
+    <Compile Include="LocationHub.fs" />
     <Compile Include="Engine.fs" />
     <Compile Include="DSL.fs" />
     <Compile Include="Facts.fs" />
