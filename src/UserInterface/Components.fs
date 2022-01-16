@@ -59,7 +59,7 @@ type Components() =
                                    )
             | LocationHubMode (hub) ->
                 Components.LocationHubView(
-                    (Engine.lookupCurrentLocation state.GameState)
+                    (Engine.lookupCurrentLocation state.GameState),
                     state,
                     state.Animation,
                     setState,
@@ -125,6 +125,11 @@ type Components() =
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
 
+        let renderedVariants = 
+            List.choose renderVariant (loc.Variants s.GameState) 
+                            |> List.mapi (fun i (render, d) ->
+                                                      render (d, s, a, setstate, setgs, i))
+
         Html.div [
             prop.className "location-hub-window dialog-window"
             prop.children [
@@ -137,12 +142,12 @@ type Components() =
                 Html.div [ 
                     prop.className "variants"
                     prop.children (
-                        List.choose renderVariant (loc.Variants s.GameState) 
-                            |> List.mapi (fun i (render, d) ->
-                                                      render (d, s, a, setstate, setgs, i))
-                            @ [ 
-                                    Html.div [ prop.innerHtml "add" ]
-                                ])
+                            renderedVariants
+                            @ [
+                                Html.div [ prop.innerHtml "people to talk" ]
+                                Html.div [ prop.innerHtml "places to go" ]
+                            ]
+                        )
                 ]
             ]
         ]
