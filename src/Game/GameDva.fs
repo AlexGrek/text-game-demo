@@ -49,6 +49,8 @@ let build () =
                 }
             )
 
+            var (pushLocVariant "сразу на кухню, на новую нахуй" "kitchen")
+
             var (
                 variant "2" {
                     text "попытаться все же уснуть"
@@ -113,6 +115,16 @@ let build () =
             var ("посмотреть в окно" --- "окна.init")
             var ("порыться в шкафах" --- "шкаф.init")
         }
+
+    location "kitchen" {
+        stxt "надо же, мы на кухне блять нахуй, я ебал"
+        var (popVariant "блять, назад, поп нахуй")
+        var (variant "нихуя" {
+            changeLoc "kitchen"
+        })
+        var (popLocVariant "в пизду нахуй")
+        var (pushLocVariant "еще один уровень рекурсии нахуй, погнали" "kitchen")
+    } |> ignore
 
     createDialog
         "init"

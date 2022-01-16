@@ -9,9 +9,9 @@ type UiState =
     | DialogMode of DialogState
     | LocationHubMode of LocationHubState
 
-type IGameData =
-    abstract Stringify : unit -> string
-
+type ErrorInfo = {
+    Message: string
+}
 type State =
     { UI: UiState
       UIStack: UiState list
@@ -19,7 +19,8 @@ type State =
       Log: string list
       KnownFacts: Set<string>
       Iteration: int
-      Data: Map<string, obj> }
+      Data: Map<string, obj>
+      Error: ErrorInfo option }
 
 let makeInitialStateInDialog (r: UReference) =
     { UI = DialogMode({ Reference = r })
@@ -28,6 +29,7 @@ let makeInitialStateInDialog (r: UReference) =
       Log = []
       KnownFacts = Set.empty
       Iteration = 0
+      Error = None
       Data = Map.empty }
 
 let currentDialogRef s =
@@ -58,10 +60,34 @@ let pushDialog d w s =
         UI = setUIDialog d w
         UIStack = s.UI :: s.UIStack }
 
+let pushLocation name s =
+    { iterate s with
+        UI = LocationHubMode({LocReference = name})
+        UIStack = s.UI :: s.UIStack }
+
 let popDialog s =
     match s.UIStack with
-    | [] -> failwith "Attempt to pop UI stack when it was empty"
+    | [] -> failwith "Attempt to pop UI stack when it was empty (popDialog)"
     | head :: tail -> { iterate s with UI = head; UIStack = tail }
+
+let popToLocation sold =
+    let rec popInner s =
+        match s.UIStack with
+        | [] -> failwith "Attempt to pop UI stack when it was empty (popToLocation)"
+        | head :: tail -> 
+            let pop1 = { s with UI = head; UIStack = tail }
+            match pop1.UI with 
+            | LocationHubMode(_) -> pop1
+            | _ -> popInner pop1 // pop recursively until we hit a location
+    iterate sold
+    |> popInner
+
+let changeLocation name s =
+    match s.UI with
+    | LocationHubMode(_) -> {iterate s with UI = LocationHubMode({LocReference = name})}
+    | _ -> 
+        // we have to push stack until we hit location, and then replace it
+        { popToLocation s with UI = LocationHubMode({LocReference = name})}
 
 let jumpWithDialogStackTo targetRef newStackRefs s =
     let mapUIStack (u: UReference) =

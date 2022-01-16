@@ -47,31 +47,39 @@ type Components() =
                     GameState = s
                     Animation = NoAnimation }
 
-        let uiWidgetToRender =
-            match state.GameState.UI with
-            | DialogMode (dm) -> 
-                Components.DialogWindowView(
-                                       (Engine.lookupCurrentDialogWindow state.GameState),
-                                       state,
-                                       state.Animation,
-                                       setState,
-                                       setGameState
-                                   )
-            | LocationHubMode (hub) ->
-                Components.LocationHubView(
-                    (Engine.lookupCurrentLocation state.GameState),
-                    state,
-                    state.Animation,
-                    setState,
-                    setGameState
-                )
+        
+        match state.GameState.Error with
+        | None ->
+            try
+                let uiWidgetToRender =
+                    match state.GameState.UI with
+                    | DialogMode (dm) -> 
+                        Components.DialogWindowView(
+                                               (Engine.lookupCurrentDialogWindow state.GameState),
+                                               state,
+                                               state.Animation,
+                                               setState,
+                                               setGameState
+                                           )
+                    | LocationHubMode (hub) ->
+                        Components.LocationHubView(
+                            (Engine.lookupCurrentLocation state.GameState),
+                            state,
+                            state.Animation,
+                            setState,
+                            setGameState
+                        )
 
-
-        Html.div [ prop.className "main-div"
-                   prop.children [ Components.PopupPanel(state, setState)
-                                   Components.HeaderPanel(state, setState)
-                                   uiWidgetToRender
-                                   (DevTools.Components.DevToolsToolbar(state.DevTools, state.GameState, setGameState)) ] ]
+                Html.div [ prop.className "main-div"
+                           prop.children [ Components.PopupPanel(state, setState)
+                                           Components.HeaderPanel(state, setState)
+                                           uiWidgetToRender
+                                           (DevTools.Components.DevToolsToolbar(state.DevTools, state.GameState, setGameState)) ] ]
+                with
+                | Failure(msg) ->
+                    DevTools.Components.ErrorPage(msg, state.GameState, setGameState)
+            | Some(err) ->
+                DevTools.Components.ErrorPage(err.Message, state.GameState, setGameState)
 
 
     [<ReactComponent>]

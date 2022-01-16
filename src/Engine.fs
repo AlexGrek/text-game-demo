@@ -32,8 +32,14 @@ let executeCurrentDialogWindow s =
     | None -> s
     | Some(m) -> m s
 
-let execute (a: Actions.IAction) =
-    a.Exec >> executeCurrentDialogWindow
+let execute (a: Actions.IAction) (s: State) =
+    try 
+        let updatedState = a.Exec s
+        match updatedState.UI with
+        | DialogMode(d) -> executeCurrentDialogWindow updatedState
+        | _ -> updatedState // other modes do not require execution for now
+    with
+        | Failure(f) -> {s with Error = Some({Message = f})}
     
 
 type IGameRunner =

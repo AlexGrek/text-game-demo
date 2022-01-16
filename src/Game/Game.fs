@@ -142,6 +142,7 @@ let ENTRY_STATE =
       KnownFacts = Set.empty
       Iteration = 0
       Data = initData()
+      Error = None
       Log = [] }
 
 let makeEntryState() =

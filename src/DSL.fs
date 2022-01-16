@@ -121,6 +121,24 @@ type VariantBuilder(text: string, createVariant: string -> IAction -> DialogVari
                     { TargetRef = { D = d; W = w }
                       Mod = None } }
 
+    [<CustomOperation("pushLoc")>]
+    member __.SetActionPushLoc(v: DialogVariantGen, loc: string) : DialogVariantGen =
+        { v with
+            V =
+                makeUnlockedVariant
+                    v.V.Text
+                    { LocationRef = loc
+                      PushLocation.Mod = None } }
+
+    [<CustomOperation("changeLoc")>]
+    member __.SetActionChangeLoc(v: DialogVariantGen, loc: string) : DialogVariantGen =
+        { v with
+            V =
+                makeUnlockedVariant
+                    v.V.Text
+                    { LocationRef = loc
+                      ChangeLocation.Mod = None } }
+
     [<CustomOperation("text")>]
     member __.SetText(v: DialogVariantGen, s: string) : DialogVariantGen =
         { v with V = makeUnlockedVariant s v.V.Action }
@@ -162,9 +180,15 @@ let (---) (x: string) (y: string) =
 
 let pop = { Pop.Mod = None }
 
+let popLoc = { PopToLocation.Mod = None }
+
 let pushWindow target =
     let reference = UReference.Parse target
     (pushWindowRef reference)
+
+let pushLoc target = { LocationRef = target; PushLocation.Mod = None }
+
+let changeLoc target = { LocationRef = target; ChangeLocation.Mod = None }
 
 let once (propName: string) actionOnce actionOther =
     { Property = Props.BoolProperty("once::" + propName, false)
@@ -174,6 +198,10 @@ let once (propName: string) actionOnce actionOther =
 let goToWindow target = { Target = target }
 
 let popVariant text = makeUnlockedVariant text (pop)
+
+let popLocVariant text = makeUnlockedVariant text (popLoc)
+
+let pushLocVariant text target = makeUnlockedVariant text (pushLoc target)
 
 let moveWithStackRef targetRef stackRef =
     { Target = targetRef
@@ -189,35 +217,49 @@ let cond p onTrue onFalse =
       OnTrue = onTrue
       OnFalse = onFalse }
 
-let getPeopleOnLocation (s: State) =
-    []
+let getPeopleOnLocation (s: State) = []
 
-type LocationHubStaticVariants = 
-    {
-        LocationHub: LocationHub
-        Variants: DialogVariant list
-    } 
-        member
-            x.Build() =
-                { x.LocationHub with Variants = s x.Variants }
+type LocationHubStaticVariants =
+    { LocationHub: LocationHub
+      Variants: DialogVariant list }
+    member x.Build() =
+        { x.LocationHub with Variants = s (List.rev x.Variants) }
+
 
 type LocationHubBuilder(name: string) =
-    let initialLocation = 
-        {
-            Locations = []
-            Persons = getPeopleOnLocation
-            Variants = s []
-            Description = stxt ""
-            Name = name
-        }
+    let initialLocation =
+        { Locations = []
+          Persons = getPeopleOnLocation
+          Variants = s []
+          Description = stxt ""
+          Name = name }
 
     member __.Yield(_) : LocationHubStaticVariants =
-        { LocationHub = initialLocation; Variants = []}
+        { LocationHub = initialLocation
+          Variants = [] }
 
-    member __.Run(a: LocationHubStaticVariants) : LocationHub = 
-        a.Build()
-        |> save REPO_LOCATIONS name
+    member __.Run(a: LocationHubStaticVariants) : LocationHub = a.Build() |> save REPO_LOCATIONS name
 
-    [<CustomOperation("text")>]
-    member __.Stxt(dialog: StaticWindowGenerator, text: string) : StaticWindowGenerator =
-        staticDialogWindow name dialog.Actor (stxt text) dialog.StaticVariants dialog.OnEntry
+    [<CustomOperation("stxt")>]
+    member __.Stxt(loc: LocationHubStaticVariants, text: string) : LocationHubStaticVariants =
+        { loc with LocationHub = { loc.LocationHub with Description = stxt text } }
+
+    [<CustomOperation("ptxt")>]
+    member __.Ptxt(loc: LocationHubStaticVariants, text: string) : LocationHubStaticVariants =
+        { loc with LocationHub = { loc.LocationHub with Description = ptxt text } }
+
+    [<CustomOperation("ctxt")>]
+    member __.Ctxt
+        (
+            loc: LocationHubStaticVariants,
+            predicate: State -> bool,
+            text1: string,
+            text2: string
+        ) : LocationHubStaticVariants =
+        { loc with LocationHub = { loc.LocationHub with Description = ctxt predicate text1 text2 } }
+
+    [<CustomOperation("var")>]
+    member __.Var(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
+        { loc with Variants = variant :: loc.Variants }
+
+let location name = LocationHubBuilder name 

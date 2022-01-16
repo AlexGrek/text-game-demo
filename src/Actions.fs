@@ -9,6 +9,7 @@ type Link =
     | PopLink
     | PushLink of UReference
     | JumpLink of UReference
+    | PushLocationLink of string
 
 type IAction =
     abstract member Exec : State -> State
@@ -61,6 +62,23 @@ type Pop =
                 | Some(old) -> Some(m >> old)
             { x with Pop.Mod = newMod } :> IAction
 
+type PopToLocation =
+    { Mod: Option<State -> State> }
+    interface IAction with
+        member this.Links() : Link list = [ PopLink ]
+
+        member x.Exec state =
+            state
+            |> (Option.defaultValue id x.Mod >> popToLocation)
+        
+        member x.ComposeAfter m = 
+            let newMod =
+                match x.Mod with
+                | None -> Some(m)
+                | Some(old) -> Some(m >> old)
+            { x with PopToLocation.Mod = newMod } :> IAction
+
+
 type Push =
     { TargetRef: UReference; Mod: Option<State -> State> }
     interface IAction with
@@ -77,6 +95,40 @@ type Push =
                 | None -> Some(m)
                 | Some(old) -> Some(m >> old)
             { x with Push.Mod = newMod } :> IAction
+
+type PushLocation =
+    { LocationRef: string; Mod: Option<State -> State> }
+    interface IAction with
+        member this.Links() : Link list = [ PushLocationLink(this.LocationRef) ]
+
+        member x.Exec state =
+            state 
+            |> Option.defaultValue id x.Mod
+            |> pushLocation x.LocationRef
+        
+        member x.ComposeAfter m = 
+            let newMod =
+                match x.Mod with
+                | None -> Some(m)
+                | Some(old) -> Some(m >> old)
+            { x with PushLocation.Mod = newMod } :> IAction
+
+type ChangeLocation =
+    { LocationRef: string; Mod: Option<State -> State> }
+    interface IAction with
+        member this.Links() : Link list = [ PushLocationLink(this.LocationRef) ]
+
+        member x.Exec state =
+            state 
+            |> Option.defaultValue id x.Mod
+            |> changeLocation x.LocationRef
+        
+        member x.ComposeAfter m = 
+            let newMod =
+                match x.Mod with
+                | None -> Some(m)
+                | Some(old) -> Some(m >> old)
+            { x with ChangeLocation.Mod = newMod } :> IAction
 
 let private linksFromTwo (a: IAction) (b: IAction) =
     List.concat [ a.Links(); b.Links() ]

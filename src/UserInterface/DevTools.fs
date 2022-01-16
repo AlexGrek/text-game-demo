@@ -10,6 +10,8 @@ open Game
 open State
 open Fable.SimpleJson
 
+type p = prop
+
 type Components() =
     [<ReactComponent>]
     static member DevToolsToolbar(enabled: bool, state: State, setGameState) =
@@ -26,3 +28,28 @@ type Components() =
                                                          setGameState <| Serialication.loadMainState ()) ] ] ]
         else
             Html.div []
+
+    [<ReactComponent>]
+    static member ErrorPage(errorText: string, state: State, setGameState: State -> unit) =
+            Html.div [
+                p.children [
+                    Html.h1 [
+                        prop.innerHtml "Error happened!"
+                    ]
+                    Html.p [
+                        prop.innerHtml errorText
+                    ]
+                    Html.button [
+                        prop.text "[ Recover ]"
+                        prop.onClick (fun _ -> setGameState {state with Error = None})
+                    ]
+                    Html.h3 [
+                        prop.innerHtml "Error state:"
+                    ]
+                    Html.textarea [
+                        prop.value (Json.serialize<State> state)
+                        prop.style [ style.minHeight 100; style.minWidth 600 ]
+                    ]
+                    
+                ]
+            ]
