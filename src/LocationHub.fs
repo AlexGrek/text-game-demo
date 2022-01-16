@@ -20,6 +20,7 @@ type LocationHub = {
     Persons: State -> PersonTarget list
     Variants: State -> DialogVariant list
     Description: State -> RichText
+    Name: string
 }
 
 let REPO_LOCATIONS = Data.GlobalRepository<LocationHub>()

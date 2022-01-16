@@ -4,6 +4,7 @@ open State
 open Dialog
 open Actions
 open Data
+open LocationHub
 
 type StaticWindowGenerator =
     { Name: string
@@ -187,3 +188,36 @@ let cond p onTrue onFalse =
     { Predicate = p
       OnTrue = onTrue
       OnFalse = onFalse }
+
+let getPeopleOnLocation (s: State) =
+    []
+
+type LocationHubStaticVariants = 
+    {
+        LocationHub: LocationHub
+        Variants: DialogVariant list
+    } 
+        member
+            x.Build() =
+                { x.LocationHub with Variants = s x.Variants }
+
+type LocationHubBuilder(name: string) =
+    let initialLocation = 
+        {
+            Locations = []
+            Persons = getPeopleOnLocation
+            Variants = s []
+            Description = stxt ""
+            Name = name
+        }
+
+    member __.Yield(_) : LocationHubStaticVariants =
+        { LocationHub = initialLocation; Variants = []}
+
+    member __.Run(a: LocationHubStaticVariants) : LocationHub = 
+        a.Build()
+        |> save REPO_LOCATIONS name
+
+    [<CustomOperation("text")>]
+    member __.Stxt(dialog: StaticWindowGenerator, text: string) : StaticWindowGenerator =
+        staticDialogWindow name dialog.Actor (stxt text) dialog.StaticVariants dialog.OnEntry
