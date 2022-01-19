@@ -217,28 +217,60 @@ let cond p onTrue onFalse =
       OnTrue = onTrue
       OnFalse = onFalse }
 
-let getPeopleOnLocation (s: State) = []
+let getPeopleOnLocation name (s: State) = []
 
 type LocationHubStaticVariants =
     { LocationHub: LocationHub
-      Variants: DialogVariant list }
+      Variants: DialogVariant list
+      StaticPersons: LocationHubVariant list }
     member x.Build() =
-        { x.LocationHub with Variants = s (List.rev x.Variants) }
+        { x.LocationHub with 
+            Variants = s (List.rev x.Variants)
+            // include both static persons and dynamic persons
+            Persons = fun state -> (List.rev x.StaticPersons) @ (x.LocationHub.Persons state)
+         }
 
 
 type LocationHubBuilder(name: string) =
     let initialLocation =
         { Locations = []
-          Persons = getPeopleOnLocation
+          Persons = getPeopleOnLocation name
           Variants = s []
           Description = stxt ""
           Name = name }
 
     member __.Yield(_) : LocationHubStaticVariants =
         { LocationHub = initialLocation
-          Variants = [] }
+          Variants = []
+          StaticPersons = [] }
 
     member __.Run(a: LocationHubStaticVariants) : LocationHub = a.Build() |> save REPO_LOCATIONS name
+
+    [<CustomOperation("locVariant")>]
+    member __.LocVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
+        { loc with LocationHub =
+                    { loc.LocationHub with
+                        Locations =
+                            List.rev ((makePicturelessLocationVariant variant) :: loc.LocationHub.Locations)}
+        }
+
+    
+    [<CustomOperation("locTarget")>]
+    member __.LocVar(loc: LocationHubStaticVariants, toName: string, target: string) : LocationHubStaticVariants =
+        let variant = variant toName {
+            pushLoc target
+        }
+        { loc with LocationHub =
+                    { loc.LocationHub with
+                        Locations =
+                            List.rev ((makePicturelessLocationVariant variant) :: loc.LocationHub.Locations)}
+        }
+
+    [<CustomOperation("personVariant")>]
+    member __.PersVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
+        { loc with StaticPersons =
+                    (makePicturelessLocationVariant variant) :: loc.StaticPersons}
+
 
     [<CustomOperation("stxt")>]
     member __.Stxt(loc: LocationHubStaticVariants, text: string) : LocationHubStaticVariants =
@@ -262,4 +294,4 @@ type LocationHubBuilder(name: string) =
     member __.Var(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
         { loc with Variants = variant :: loc.Variants }
 
-let location name = LocationHubBuilder name 
+let location name = LocationHubBuilder name         

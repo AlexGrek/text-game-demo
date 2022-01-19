@@ -4,9 +4,6 @@ open DSL
 open Props
 open Dialog
 
-type Person(name: string) =
-    let theName = name
-
 type BasicAnswers =
     { DontKnow: string list
       Shock: string list
