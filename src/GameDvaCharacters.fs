@@ -4,6 +4,7 @@ open Props
 open DSL
 open Dialog
 open NPC
+open Person
 
 type Myself() =
     inherit Person("myself")
@@ -26,6 +27,10 @@ type PolicemanJoe() =
     inherit Person("joe")
     let n = "joe"
     member val Talker = Talker(n, DefaultBasicAnswers, DontKnow)
+    override x.Roles() = 
+        RoleModel.RoleModel([
+            
+        ])
 
 type World(facts: GameDvaFacts.GameDvaFacts) =
     let name = "world"
