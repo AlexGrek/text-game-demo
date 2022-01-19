@@ -13,13 +13,6 @@ type UReference =
       let d, w = Utils.splitByDot2 str
       { D = d; W = w}
 
-type Pointer =
-    | FullPointer of UReference
-    | PushPointer of UReference
-    | WPointer of string
-    | DPointer of string
-    | BackPointer
-
 type GlobalRepository<'a> () =
     static let instance = GlobalRepository<'a>()
 
@@ -35,29 +28,18 @@ type GlobalRepository<'a> () =
 
     member instance.Keys() = Seq.toList <| instance.Repo.Keys
 
+    member instance.Vals() = instance.Repo.Values
+
     member instance.Pairs () = (Seq.toList >> List.map (fun x -> (x, instance.Repo.[x]))) (instance.Repo.Keys) 
 
     member instance.Reset() =
       instance.Repo.Clear()
 
-
-
-
-// type Repository<'a>() =
-//     member private x.Repo = Dictionary<string, 'a>()
-
-//     member x.Get key = x.Repo.[key]
-
-//     member x.Item
-//         with get (k: string) = x.Get k
-
-//     member x.Add key value =
-//         x.Repo.Add(key, value)
-//         x
-
 let dumpGlobalKeys<'a> (repo: GlobalRepository<'a>) = repo.Keys ()
 
 let dumpGlobalPairs<'a> (repo: GlobalRepository<'a>) = repo.Pairs ()
+
+let values<'a> (repo: GlobalRepository<'a>) = repo.Vals ()
 
 let keyExists<'a> (repo: GlobalRepository<'a>) (key: string) = repo.ContainsKey (key)
 
@@ -74,41 +56,5 @@ let getGlobal<'a> (repo: GlobalRepository<'a>) key =
 
 let resetGlobal<'a> (repo: GlobalRepository<'a>) = repo.Reset ()
 
-
-type ReferenceCheckerStorage () =
-    static let instance = ReferenceCheckerStorage()
-
-    member val Repo = Set.empty with get, set
-    static member Instance = instance
-
-    static member MustAdd (reference: string) = instance.Repo <- Set.add reference instance.Repo
-
-    static member Contains (reference: string) = Set.contains reference instance.Repo
-
-    static member Reset () = instance.Repo <- Set.empty
-
-    static member All () = instance.Repo
-
-
-let toReferenceChecker reference =
-  if ReferenceCheckerStorage.Contains reference then
-    reference
-  else
-    ReferenceCheckerStorage.MustAdd reference
-    reference
-
-let checkReferencesAgainst (refs: UReference list) =
-  let predicate (r: string) (l: UReference) =
-    l.W = r
-  let check (r: string) = 
-    match List.tryFind (predicate r) refs with
-    | None -> Some(r)
-    | Some(_) -> None
-  let errors = Set.toList (ReferenceCheckerStorage.All()) |> List.choose check
-  if (List.isEmpty >> not) errors then
-    failwith <| sprintf "Failed references: %A" errors
-
-
-
 let resetAll () =
-  ReferenceCheckerStorage.Reset ()
+  ()

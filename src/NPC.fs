@@ -3,6 +3,7 @@ module NPC
 open DSL
 open Props
 open Dialog
+open Person
 
 type BasicAnswers =
     { DontKnow: string list
@@ -38,9 +39,10 @@ type Reaction =
     | DontBelieve
     | DontCare
 
-
+let TALKER_ROLE_ID = "talker"
 
 type Talker(name: string, basicAnswers: BasicAnswers, defaultReaction: Reaction) =
+    inherit RoleModel.Role(TALKER_ROLE_ID)
     let knownFactsProp =
         ListStringProperty.Personal name "knownFacts"
 
@@ -123,3 +125,6 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
 
     let dialog = createDialog dialogName ws
     dialogName + ".init"
+
+let asTalker(p: Person) =
+    (p.Roles().As TALKER_ROLE_ID) :?> Talker

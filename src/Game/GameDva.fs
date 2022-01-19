@@ -16,7 +16,7 @@ let build () =
     let policemanJoeTalkerTalk = 
         NPC.createAskAboutDialog 
             "Джо"
-            chars.PolicemanJoe.Talker
+            (NPC.asTalker chars.PolicemanJoe)
             (Map.empty 
                 |> Map.add facts.deadBodyFound.FactId (NPC.Say("Я сам шокирован этим. Мы не ожидали, что все будет именно так")))
 
@@ -124,6 +124,7 @@ let build () =
         })
         var (popLocVariant "в пизду нахуй")
         var (pushLocVariant "еще один уровень рекурсии нахуй, погнали" "kitchen")
+        locTarget "снова умираем нахуй" "никуда"
     } |> ignore
 
     createDialog

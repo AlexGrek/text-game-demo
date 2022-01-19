@@ -1,7 +1,6 @@
 module RoleModel
 
-type Role(roleIdentifier: string, name: string) =
-    let x = name
+type Role(roleIdentifier: string) =
     member x.RoleId =
         roleIdentifier
 
@@ -17,4 +16,16 @@ type RoleModel(rolesList: Role list) =
         roles.ContainsKey (role.RoleId)
     member x.As (roleId: string) =
         roles.[roleId]
+    member x.As (role: Role) =
+        roles.[role.RoleId]
+    member x.AsOption (roleId: string) =
+        if (x.CanBe roleId) then
+            Some(roles.[roleId])
+        else
+            None
+    member x.AsOption (role: Role) =
+        if (x.CanBe role) then
+            Some(roles.[role.RoleId])
+        else
+            None
     

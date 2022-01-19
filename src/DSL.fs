@@ -217,7 +217,26 @@ let cond p onTrue onFalse =
       OnTrue = onTrue
       OnFalse = onFalse }
 
-let getPeopleOnLocation name (s: State) = []
+let getPeopleOnLocation name (state: State) = 
+    let createForPerson (p: Person.Person) =
+        {
+            Pic = None
+            Variant = 
+                makeUnlockedVariant 
+                    (p.DisplayName state)
+                    { TargetRef = { D = p.Name; W = "init" }
+                      Mod = None }
+        }
+    let inLocation (l: Person.InLocation) =
+        (l.CurrentLocation.Get state) = name
+    let checkPerson (p: Person.Person) =
+        match (Person.asInLocation p) with
+        | Some(loc) -> inLocation loc
+        | None -> false
+    values Person.REPO_PERSONS
+    |> Seq.filter checkPerson
+    |> Seq.toList
+    |> List.map createForPerson
 
 type LocationHubStaticVariants =
     { LocationHub: LocationHub
@@ -294,4 +313,4 @@ type LocationHubBuilder(name: string) =
     member __.Var(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
         { loc with Variants = variant :: loc.Variants }
 
-let location name = LocationHubBuilder name         
+let location name = LocationHubBuilder name

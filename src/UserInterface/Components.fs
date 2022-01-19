@@ -133,8 +133,21 @@ type Components() =
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
 
+        let toSimpleVariants (l: LocationHub.LocationHubVariant list) =
+            List.map (fun r -> r.Variant) l
+
         let renderedVariants = 
             List.choose renderVariant (loc.Variants s.GameState) 
+                            |> List.mapi (fun i (render, d) ->
+                                                      render (d, s, a, setstate, setgs, i))
+
+        let renderedLocations = 
+            List.choose renderVariant (toSimpleVariants loc.Locations) 
+                            |> List.mapi (fun i (render, d) ->
+                                                      render (d, s, a, setstate, setgs, i))
+
+        let renderedPersons = 
+            List.choose renderVariant (loc.Persons s.GameState |> toSimpleVariants) 
                             |> List.mapi (fun i (render, d) ->
                                                       render (d, s, a, setstate, setgs, i))
 
@@ -153,8 +166,12 @@ type Components() =
                             renderedVariants
                             @ [
                                 Html.div [ prop.innerHtml "people to talk" ]
+                            ]
+                            @ renderedPersons
+                            @ [
                                 Html.div [ prop.innerHtml "places to go" ]
                             ]
+                            @ renderedLocations
                         )
                 ]
             ]

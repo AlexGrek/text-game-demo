@@ -26,10 +26,10 @@ type Myself() =
 type PolicemanJoe() =
     inherit Person("joe")
     let n = "joe"
-    member val Talker = Talker(n, DefaultBasicAnswers, DontKnow)
     override x.Roles() = 
         RoleModel.RoleModel([
-            
+            InLocation(x.Name, "kitchen")
+            Talker(x.Name, DefaultBasicAnswers, DontKnow)
         ])
 
 type World(facts: GameDvaFacts.GameDvaFacts) =
@@ -54,10 +54,15 @@ type World(facts: GameDvaFacts.GameDvaFacts) =
         x.PoliceArriving.Get s
         && x.PoliceComingCounter.Elapsed s > 4
 
+// shortcut
+let saved (pers: 'a) = 
+    savePers (pers :> Person) |> ignore
+    pers
+
 type Characters(facts: GameDvaFacts.GameDvaFacts) =
     let myself = Myself()
-    member val Myself = myself
-    member val PolicemanJoe = PolicemanJoe()
+    member val Myself = saved myself
+    member val PolicemanJoe = saved <| PolicemanJoe()
     member val World = World(facts)
 
     member x.DeathReset(s: State.State) =

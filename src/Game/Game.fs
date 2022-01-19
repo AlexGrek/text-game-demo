@@ -25,14 +25,6 @@ let initData(): Map<string, obj> =
             ("person.Lexi.knowledge", [|"huioledge"|] :> obj)
         ]
     bases
-    
-
-let checkRefs () =
-    let realRefs = dumpGlobalPairs<Dialog> REPO_DIALOG
-                   |> List.collect 
-                      (fun (k, v) -> v.DialogWindows |> Map.toList |> List.map 
-                                                                      (fun x -> {D = k; W = (fst x)}))
-    checkReferencesAgainst realRefs
        
 
 let init () =

@@ -96,3 +96,23 @@ type ListStringProperty(path: string) =
             state
 
     static member Personal name propName = ListStringProperty(name -. propName)
+
+let asString (f: obj) = f :?> string
+
+type StringProperty(path, defv) =
+    inherit Property(path)
+    member x.DefaultValue = defv
+
+    member x.Set value state =
+        let oValue = (value :> obj)
+
+        let newData =
+            (Map.change path (fun _ -> Some(oValue)) state.Data)
+
+        { state with Data = newData }
+
+    member x.Get(state: State) =
+        Option.map asString (x.GetRawOption state)
+        |> Option.defaultValue x.DefaultValue
+
+    static member Personal name propName defv = StringProperty(name -. propName, defv)
