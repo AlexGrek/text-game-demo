@@ -4,6 +4,7 @@ open Data
 open RichText
 open State
 open Dialog
+open HubDesign
 
 type LocationHubVariant = {
     Pic: string option
@@ -16,6 +17,7 @@ type LocationHub = {
     Variants: State -> DialogVariant list
     Description: State -> RichText
     Name: string
+    Design: HubDesign
 }
 
 let REPO_LOCATIONS = GlobalRepository<LocationHub>()
