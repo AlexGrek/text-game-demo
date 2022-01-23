@@ -1,5 +1,9 @@
 module HubDesign
 
 type HubDesign = {
-    Color: string
+    Color: string option
+}
+
+let defaultDesign = {
+    Color = None
 }

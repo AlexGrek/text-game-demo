@@ -20,6 +20,7 @@
     <Compile Include="DSL.fs" />
     <Compile Include="Facts.fs" />
     <Compile Include="NPC.fs" />
+    <Compile Include="ViewModel.fs" />
     <Compile Include="StoryWriter.fs" />
     <Compile Include="Game/GameDvaFacts.fs" />
     <Compile Include="GameDvaCharacters.fs" />

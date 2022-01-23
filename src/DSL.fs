@@ -253,6 +253,7 @@ type LocationHubStaticVariants =
 type LocationHubBuilder(name: string) =
     let initialLocation =
         { Locations = []
+          Design = HubDesign.defaultDesign
           Persons = getPeopleOnLocation name
           Variants = s []
           Description = stxt ""
@@ -271,6 +272,13 @@ type LocationHubBuilder(name: string) =
                     { loc.LocationHub with
                         Locations =
                             List.rev ((makePicturelessLocationVariant variant) :: loc.LocationHub.Locations)}
+        }
+
+    [<CustomOperation("design")>]
+    member __.Des(loc: LocationHubStaticVariants, design: HubDesign.HubDesign) : LocationHubStaticVariants =
+        { loc with LocationHub =
+                    { loc.LocationHub with
+                        Design = design }
         }
 
     
