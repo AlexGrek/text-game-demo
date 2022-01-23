@@ -12,6 +12,7 @@ open Fable.Core
 open Fable.Core.JS
 open FactsRenderer
 open LocationHub
+open ViewModel
 
 type AnimationProgress =
     | NoAnimation
@@ -22,6 +23,7 @@ type GlobalState =
     { DevTools: bool
       FactsPanelOpened: bool
       GameState: State
+      RenderedState: ViewOrError
       Animation: AnimationProgress }
 
 type Components() =
@@ -36,6 +38,7 @@ type Components() =
         let (state, setState) =
             React.useState (
                 { GameState = initialState
+                  RenderedState = renderViewModel initialState
                   Animation = NoAnimation
                   FactsPanelOpened = false
                   DevTools = true }
@@ -45,23 +48,24 @@ type Components() =
             setState
                 { state with
                     GameState = s
-                    Animation = NoAnimation }
+                    Animation = NoAnimation
+                    RenderedState = renderViewModel s }
 
-        
-        match state.GameState.Error with
-        | None ->
+        let vm = state.RenderedState
+        match vm with
+        | View(v) ->
             try
                 let uiWidgetToRender =
-                    match state.GameState.UI with
-                    | DialogMode (dm) -> 
+                    match v.UI with
+                    | DialogView (d) -> 
                         Components.DialogWindowView(
-                                               (Engine.lookupCurrentDialogWindow state.GameState),
+                                               d,
                                                state,
                                                state.Animation,
                                                setState,
                                                setGameState
                                            )
-                    | LocationHubMode (hub) ->
+                    | LocaitionHubView (hub) ->
                         Components.LocationHubView(
                             (Engine.lookupCurrentLocation state.GameState),
                             state,
@@ -78,8 +82,8 @@ type Components() =
                 with
                 | Failure(msg) ->
                     DevTools.Components.ErrorPage(msg, state.GameState, setGameState)
-            | Some(err) ->
-                DevTools.Components.ErrorPage(err.Message, state.GameState, setGameState)
+            | Error(state, err) ->
+                DevTools.Components.ErrorPage(err, state, setGameState)
 
 
     [<ReactComponent>]
@@ -139,24 +143,24 @@ type Components() =
         let renderedVariants = 
             List.choose renderVariant (loc.Variants s.GameState) 
                             |> List.mapi (fun i (render, d) ->
-                                                      render (d, s, a, setstate, setgs, i))
+                                                      render (DialogVariantView.OfDialogVariant s.GameState d, s, a, setstate, setgs, i))
 
         let renderedLocations = 
             List.choose renderVariant (toSimpleVariants loc.Locations) 
                             |> List.mapi (fun i (render, d) ->
-                                                      render (d, s, a, setstate, setgs, i))
+                                                      render (DialogVariantView.OfDialogVariant s.GameState d, s, a, setstate, setgs, i))
 
         let renderedPersons = 
             List.choose renderVariant (loc.Persons s.GameState |> toSimpleVariants) 
                             |> List.mapi (fun i (render, d) ->
-                                                      render (d, s, a, setstate, setgs, i))
+                                                      render (DialogVariantView.OfDialogVariant s.GameState d, s, a, setstate, setgs, i))
 
         Html.div [
             prop.className "location-hub-window dialog-window"
             prop.children [
                 DialogTextComponents.DialogtextRenderer(
                                        animation,
-                                       loc.Description,
+                                       loc.Description s.GameState, //TODO: rework
                                        s.GameState,
                                        s.GameState.Iteration
                                    )
@@ -181,7 +185,7 @@ type Components() =
     [<ReactComponent>]
     static member DialogWindowView
         (
-            w: DialogWindow,
+            w: DialogViewModel,
             s: GlobalState,
             a: AnimationProgress,
             setstate: GlobalState -> unit,
@@ -192,8 +196,8 @@ type Components() =
             | NoAnimation -> "animate__animated animate__fadeInLeft animate__faster"
             | VariantChosen (_) -> "animate__animated animate__fadeOutRight"
 
-        let render (el: DialogVariant) =
-            match (el.IsLocked s.GameState) with
+        let render (el: DialogVariantView) =
+            match (el.IsLocked) with
             | Unlocked -> Some(Components.DialogButton, el)
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
@@ -208,7 +212,7 @@ type Components() =
                                    )
                                    Html.div [ prop.className "variants"
                                               prop.children (
-                                                  List.choose render (w.Variants s.GameState)
+                                                  List.choose render w.Variants
                                                   |> List.mapi (fun i (render, d) ->
                                                       render (d, s, a, setstate, setgs, i))
                                               ) ]
@@ -217,7 +221,7 @@ type Components() =
 
 
     [<ReactComponent>]
-    static member DialogButton(prp: Dialog.DialogVariant, (s: GlobalState), a, setter, setgs, i) =
+    static member DialogButton(prp: DialogVariantView, (s: GlobalState), a, setter, setgs, i) =
         let withAnimation () =
             setTimeout
                 (fun _ ->
@@ -266,7 +270,7 @@ type Components() =
                       ) ]
 
     [<ReactComponent>]
-    static member LockedDialogButton(prp: Dialog.DialogVariant, (s: GlobalState), a, setter, setgs, i) =
+    static member LockedDialogButton(prp: DialogVariantView, (s: GlobalState), a, setter, setgs, i) =
         let calcDelay i =
             if i = 0 then
                 ""

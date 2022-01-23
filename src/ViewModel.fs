@@ -5,7 +5,9 @@ open LocationHub
 open State
 open Actions
 
-type DialogActorView = UnknownActor of string
+type DialogActorView = 
+    | UnknownActor of string
+    | NoActor
 // todo: add known actor with link to person
 
 type DialogVariantView =
@@ -77,3 +79,6 @@ type ViewOrError =
         match s.Error with
         | Some (err) -> Error(s, err.Message)
         | None -> View(View.OfState s)
+
+let renderViewModel (s: State) =
+    ViewOrError.OfState s
