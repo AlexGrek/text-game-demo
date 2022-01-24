@@ -67,7 +67,7 @@ type Components() =
                                            )
                     | LocaitionHubView (hub) ->
                         Components.LocationHubView(
-                            (Engine.lookupCurrentLocation state.GameState),
+                            hub,
                             state,
                             state.Animation,
                             setState,
@@ -120,7 +120,7 @@ type Components() =
     [<ReactComponent>]
     static member LocationHubView 
         ( 
-            loc: LocationHub,
+            loc: LocationHubViewModel,
             s: GlobalState,
             a: AnimationProgress,
             setstate: GlobalState -> unit,
@@ -131,36 +131,36 @@ type Components() =
             | NoAnimation -> "animate__animated animate__fadeInLeft animate__faster"
             | VariantChosen (_) -> "animate__animated animate__fadeOutRight"
 
-        let renderVariant (el: DialogVariant) =
-            match (el.IsLocked s.GameState) with
+        let renderVariant (el: DialogVariantView) =
+            match el.IsLocked with
             | Unlocked -> Some(Components.DialogButton, el)
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
 
-        let toSimpleVariants (l: LocationHub.LocationHubVariant list) =
+        let toSimpleVariants (l: LocationHubVariantView list) =
             List.map (fun r -> r.Variant) l
 
         let renderedVariants = 
-            List.choose renderVariant (loc.Variants s.GameState) 
+            List.choose renderVariant loc.Variants
                             |> List.mapi (fun i (render, d) ->
-                                                      render (DialogVariantView.OfDialogVariant s.GameState d, s, a, setstate, setgs, i))
+                                                      render (d, s, a, setstate, setgs, i))
 
         let renderedLocations = 
             List.choose renderVariant (toSimpleVariants loc.Locations) 
                             |> List.mapi (fun i (render, d) ->
-                                                      render (DialogVariantView.OfDialogVariant s.GameState d, s, a, setstate, setgs, i))
+                                                      render (d, s, a, setstate, setgs, i))
 
         let renderedPersons = 
-            List.choose renderVariant (loc.Persons s.GameState |> toSimpleVariants) 
+            List.choose renderVariant (loc.Persons |> toSimpleVariants) 
                             |> List.mapi (fun i (render, d) ->
-                                                      render (DialogVariantView.OfDialogVariant s.GameState d, s, a, setstate, setgs, i))
+                                                      render (d, s, a, setstate, setgs, i))
 
         Html.div [
             prop.className "location-hub-window dialog-window"
             prop.children [
                 DialogTextComponents.DialogtextRenderer(
                                        animation,
-                                       loc.Description s.GameState, //TODO: rework
+                                       loc.Text,
                                        s.GameState,
                                        s.GameState.Iteration
                                    )

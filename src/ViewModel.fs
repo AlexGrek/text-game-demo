@@ -5,7 +5,7 @@ open LocationHub
 open State
 open Actions
 
-type DialogActorView = 
+type DialogActorView =
     | UnknownActor of string
     | NoActor
 // todo: add known actor with link to person
@@ -18,6 +18,13 @@ type DialogVariantView =
         { Text = d.Text
           Action = d.Action
           IsLocked = d.IsLocked s }
+
+type LocationHubVariantView =
+    { Pic: string option
+      Variant: DialogVariantView }
+    static member OfLocationHubVariant (s: State) (h: LocationHubVariant) =
+        { Pic = h.Pic
+          Variant = DialogVariantView.OfDialogVariant s h.Variant }
 
 let filterOutVariants (getVariant: 'a -> DialogVariantView) (items: 'a list) =
     let predicate a =
@@ -40,17 +47,32 @@ type DialogViewModel =
             List.map (DialogVariantView.OfDialogVariant s) (d.Variants s)
             |> filterOutVariants id }
 
-type LocaitionHubViewModel =
+type LocationHubViewModel =
     { Text: RichText
       DisplayName: string
-      Variants: Dialog.DialogVariant
+      Variants: DialogVariantView list
       Design: HubDesign.HubDesign
-      Locations: LocationHubVariant list
-      Persons: LocationHubVariant list }
+      Locations: LocationHubVariantView list
+      Persons: LocationHubVariantView list }
+    static member OfLocationHub (s: State) (d: LocationHub) =
+      {
+        Text = d.Description s
+        DisplayName = d.Name //TODO: change this to actual display name
+        Design = d.Design
+        Variants = 
+          List.map (DialogVariantView.OfDialogVariant s) (d.Variants s)
+          |> filterOutVariants id
+        Locations = 
+          List.map (LocationHubVariantView.OfLocationHubVariant s) d.Locations
+          |> filterOutVariants (fun (a: LocationHubVariantView) -> a.Variant)
+        Persons =
+          List.map (LocationHubVariantView.OfLocationHubVariant s) (d.Persons s)
+          |> filterOutVariants (fun (a: LocationHubVariantView) -> a.Variant)
+      }
 
 type UIView =
     | DialogView of DialogViewModel
-    | LocaitionHubView of LocaitionHubViewModel
+    | LocaitionHubView of LocationHubViewModel
     static member OfUiState(s: State) =
         match s.UI with
         | DialogMode (dstate) ->
@@ -58,7 +80,9 @@ type UIView =
             let dialog = Data.getGlobal Dialog.REPO_DIALOG ref.D
             let window = dialog.DialogWindows.[ref.W]
             DialogView(DialogViewModel.OfDialogWindow s window)
-        | _ -> failwith "not implemented yet, punch developer in his fase for this"
+        | LocationHubMode(loc) ->
+          let hub = Data.getGlobal REPO_LOCATIONS loc.LocReference
+          LocaitionHubView(LocationHubViewModel.OfLocationHub s hub)
 
 let renderFacts (set: Set<string>) =
     let cast (el: string) = Data.getGlobal Facts.REPO_FACTS el
@@ -80,5 +104,4 @@ type ViewOrError =
         | Some (err) -> Error(s, err.Message)
         | None -> View(View.OfState s)
 
-let renderViewModel (s: State) =
-    ViewOrError.OfState s
+let renderViewModel (s: State) = ViewOrError.OfState s
