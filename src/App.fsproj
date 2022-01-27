@@ -32,6 +32,7 @@
     <Compile Include="UiUtils.fs" />
     <Compile Include="FactsRenderer.fs" />
     <Compile Include="HistoryRenderer.fs" />
+    <Compile Include="DebuggerRenderer.fs" />
     <Compile Include="UserInterface\DevTools.fs" />
     <Compile Include="UserInterface\Components.fs" />
     <Compile Include="Main.fs" />

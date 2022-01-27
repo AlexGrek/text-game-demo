@@ -4,13 +4,13 @@ open Feliz
 
 type HistoryPanelRenderer() =
     [<ReactComponent>]
-    static member HistoryPanel(records: State.InteractionHistoryRecord list) =
+    static member HistoryPanel(records: State.InteractionHistoryRecord array) =
         Html.div [ prop.className "history-panel-outer"
                    prop.children [
 
                                    Html.div [ prop.className "history-panel-container"
                                               prop.children (
-                                                  List.map (fun s -> HistoryPanelRenderer.HistoryRenderer(s)) records
+                                                  Array.map (fun s -> HistoryPanelRenderer.HistoryRenderer(s)) records
                                               ) ] ]
                     ]
 

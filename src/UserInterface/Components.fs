@@ -20,6 +20,7 @@ type OpenedPanel =
     | NoPanel
     | HistoryPanel
     | FactsPanel
+    | DebugPanel
 
 type GlobalState =
     { DevTools: bool
@@ -54,59 +55,52 @@ type Components() =
                     RenderedState = renderViewModel s }
 
         let vm = state.RenderedState
+
         match vm with
-        | View(v) ->
+        | View (v) ->
             try
                 let uiWidgetToRender =
                     match v.UI with
-                    | DialogView (d) -> 
-                        Components.DialogWindowView(
-                                               d,
-                                               state,
-                                               state.Animation,
-                                               setState,
-                                               setGameState
-                                           )
+                    | DialogView (d) -> Components.DialogWindowView(d, state, state.Animation, setState, setGameState)
                     | LocaitionHubView (hub) ->
-                        Components.LocationHubView(
-                            hub,
-                            state,
-                            state.Animation,
-                            setState,
-                            setGameState
-                        )
+                        Components.LocationHubView(hub, state, state.Animation, setState, setGameState)
 
                 Html.div [ prop.className "main-div"
                            prop.children [ Components.PopupPanel(state, setState)
                                            Components.HeaderPanel(state, setState)
                                            uiWidgetToRender
-                                           (DevTools.Components.DevToolsToolbar(state.DevTools, state.GameState, setGameState)) ] ]
-                with
-                | Failure(msg) ->
-                    DevTools.Components.ErrorPage(msg, state.GameState, setGameState)
-            | Error(state, err) ->
-                DevTools.Components.ErrorPage(err, state, setGameState)
+                                           (DevTools.Components.DevToolsToolbar(
+                                               state.DevTools,
+                                               state.GameState,
+                                               setGameState
+                                           )) ] ]
+            with
+            | Failure (msg) -> DevTools.Components.ErrorPage(msg, state.GameState, setGameState)
+        | Error (state, err) -> DevTools.Components.ErrorPage(err, state, setGameState)
 
 
     [<ReactComponent>]
     static member HeaderPanel(s: GlobalState, ss: GlobalState -> unit) =
         Html.div [ prop.className "header-panel"
                    prop.children [ UiUtils.PanelUtils.PanelButton(
-                                       { text = "Факты";
-                                         icon = "img/free-icon-bulb.png";
-                                         key = s.GameState.KnownFacts.Count;
-                                         onClick = (fun _ -> ss { s with Panel = FactsPanel })
-                                       }
+                                       text = "Факты",
+                                       icon = "img/free-icon-bulb.png",
+                                       key = s.GameState.KnownFacts.Count,
+                                       onClick = (fun _ -> ss { s with Panel = FactsPanel })
                                    )
                                    UiUtils.PanelUtils.PanelButton(
-                                       {
-                                        text = "История";
-                                        icon = "img/free-icon-comment-alt.png";
-                                        key = 999999999;
-                                        onClick = (fun _ -> ss { s with Panel = HistoryPanel })
-                                       }
+                                       text = "История",
+                                       icon = "img/free-icon-comment-alt.png",
+                                       key = 999999999,
+                                       onClick = (fun _ -> ss { s with Panel = HistoryPanel })
+                                   )
+                                   UiUtils.PanelUtils.PanelButton(
+                                       text = "Дебаггер",
+                                       icon = "img/free-icon-comment-alt.png",
+                                       key = 999999990,
+                                       onClick = (fun _ -> ss { s with Panel = DebugPanel })
                                    ) ] ]
-    
+
 
     [<ReactComponent>]
     static member PopupPanel(s: GlobalState, ss: GlobalState -> unit) =
@@ -114,29 +108,25 @@ type Components() =
             match (not property) with
             | true -> "animate__animated animate__fadeOutUp animate__faster"
             | false -> "animate__animated animate__fadeInDown animate__faster"
+
         let anyPanelStyle = openClosedStyle (s.Panel <> NoPanel)
 
-        let renderSpecificPanel name renderer = 
-            [
-                UiUtils.PanelUtils.PanelHeader(
-                                      { header = name;
-                                        onClose = fun _ -> ss { s with Panel = NoPanel }
-                                      }
-                                   )
-                renderer
-            ]
-        
+        let renderSpecificPanel name renderer =
+            [ UiUtils.PanelUtils.PanelHeader(header = name, onClose = fun _ -> ss { s with Panel = NoPanel })
+              renderer ]
+
         let genChildren =
             match s.Panel with
             | NoPanel -> []
-            | FactsPanel -> 
-                renderSpecificPanel
-                    "Факты"
-                    <| FactsPanelRenderer.FactsPanel(Seq.toList s.GameState.KnownFacts)
-            | HistoryPanel -> 
-                renderSpecificPanel 
-                    "История"
-                    <| HistoryPanelRenderer.HistoryPanel(Seq.toList s.GameState.InteractionHistory)
+            | FactsPanel ->
+                renderSpecificPanel "Факты"
+                <| FactsPanelRenderer.FactsPanel(Seq.toList s.GameState.KnownFacts)
+            | HistoryPanel ->
+                renderSpecificPanel "История"
+                <| HistoryPanelRenderer.HistoryPanel(List.toArray s.GameState.InteractionHistory)
+            | DebugPanel ->
+                renderSpecificPanel "Дебаггер"
+                <| DebuggerRenderer.DebuggerPanelRenderer.DebuggerPanel(s.GameState)
 
 
         Html.div [ prop.className ("popup-panel " + anyPanelStyle)
@@ -144,13 +134,13 @@ type Components() =
 
 
     [<ReactComponent>]
-    static member LocationHubView 
-        ( 
+    static member LocationHubView
+        (
             loc: LocationHubViewModel,
             s: GlobalState,
             a: AnimationProgress,
             setstate: GlobalState -> unit,
-            setUpdatedGameState 
+            setUpdatedGameState
         ) =
         let animation =
             match s.Animation with
@@ -163,59 +153,45 @@ type Components() =
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
 
-        let toSimpleVariants (l: LocationHubVariantView list) =
-            List.map (fun r -> r.Variant) l
+        let toSimpleVariants (l: LocationHubVariantView list) = List.map (fun r -> r.Variant) l
 
-        let setgs action actionText = 
+        let setgs action actionText =
             setUpdatedGameState
             <| executeDialogStateUpdate
                 s.GameState
-                (toString loc.Text) 
+                (toString loc.Text)
                 (Some(loc.DisplayName)) // display location name as actor
                 action
                 actionText
 
-        let renderedVariants = 
+        let renderedVariants =
             List.choose renderVariant loc.Variants
-                            |> List.mapi (fun i (render, d) ->
-                                                      render (d, s, a, setstate, setgs, i))
+            |> List.mapi (fun i (render, d) -> render (d, s, a, setstate, setgs, i))
 
-        let renderedLocations = 
-            List.choose renderVariant (toSimpleVariants loc.Locations) 
-                            |> List.mapi (fun i (render, d) ->
-                                                      render (d, s, a, setstate, setgs, i))
+        let renderedLocations =
+            List.choose renderVariant (toSimpleVariants loc.Locations)
+            |> List.mapi (fun i (render, d) -> render (d, s, a, setstate, setgs, i))
 
-        let renderedPersons = 
-            List.choose renderVariant (loc.Persons |> toSimpleVariants) 
-                            |> List.mapi (fun i (render, d) ->
-                                                      render (d, s, a, setstate, setgs, i))
+        let renderedPersons =
+            List.choose renderVariant (loc.Persons |> toSimpleVariants)
+            |> List.mapi (fun i (render, d) -> render (d, s, a, setstate, setgs, i))
 
-        Html.div [
-            prop.className "location-hub-window dialog-window"
-            prop.children [
-                DialogTextComponents.DialogtextRenderer(
+        Html.div [ prop.className "location-hub-window dialog-window"
+                   prop.children [ DialogTextComponents.DialogtextRenderer(
                                        animation,
                                        loc.Text,
                                        s.GameState,
                                        s.GameState.Iteration
                                    )
-                Html.div [ 
-                    prop.className "variants"
-                    prop.children (
-                            renderedVariants
-                            @ [
-                                Html.div [ prop.innerHtml "people to talk" ]
-                            ]
-                            @ renderedPersons
-                            @ [
-                                Html.div [ prop.innerHtml "places to go" ]
-                            ]
-                            @ renderedLocations
-                        )
-                ]
-            ]
-        ]
-        
+                                   Html.div [ prop.className "variants"
+                                              prop.children (
+                                                  renderedVariants
+                                                  @ [ Html.div [ prop.innerHtml "people to talk" ] ]
+                                                    @ renderedPersons
+                                                      @ [ Html.div [ prop.innerHtml "places to go" ] ]
+                                                        @ renderedLocations
+                                              ) ] ] ]
+
 
     [<ReactComponent>]
     static member DialogWindowView
@@ -237,14 +213,9 @@ type Components() =
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
 
-        let setgs action actionText = 
+        let setgs action actionText =
             setUpdatedGameState
-            <| executeDialogStateUpdate
-                s.GameState
-                (toString w.Text) 
-                (w.Actor.asString())
-                action 
-                actionText
+            <| executeDialogStateUpdate s.GameState (toString w.Text) (w.Actor.asString ()) action actionText
 
 
         Html.div [ prop.className "dialog-window"
@@ -260,19 +231,13 @@ type Components() =
                                                   List.choose render w.Variants
                                                   |> List.mapi (fun i (render, d) ->
                                                       render (d, s, a, setstate, setgs, i))
-                                              ) ]
-                    ] 
-        ]
+                                              ) ] ] ]
 
 
     [<ReactComponent>]
     static member DialogButton(prp: DialogVariantView, (s: GlobalState), a, setter, onClickAction, i) =
         let withAnimation () =
-            setTimeout
-                (fun _ ->
-                    onClickAction prp.Action prp.Text
-                    |> ignore)
-                500
+            setTimeout (fun _ -> onClickAction prp.Action prp.Text |> ignore) 500
             |> ignore // no way to stop timeout
 
             setter { s with Animation = VariantChosen(i) }
