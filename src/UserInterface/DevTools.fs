@@ -6,7 +6,6 @@ open Feliz.Router
 
 open Dialog
 open RichText
-open Game
 open State
 open Fable.SimpleJson
 

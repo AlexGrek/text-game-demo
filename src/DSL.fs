@@ -8,7 +8,7 @@ open LocationHub
 
 type StaticWindowGenerator =
     { Name: string
-      Actor: string
+      Actor: string option
       Text: State -> RichText.RichText
       StaticVariants: DialogVariant list
       OnEntry: Option<State -> State> }
@@ -36,7 +36,7 @@ type WindowBuilder(name: string) =
           OnEntry = onEntry }
 
     member __.Yield(_) : StaticWindowGenerator =
-        staticDialogWindow name "" (stxt "") [] None
+        staticDialogWindow name None (stxt "") [] None
 
     member __.Run(dialog: StaticWindowGenerator) : DialogWindow = dialog.Build()
 
@@ -46,7 +46,7 @@ type WindowBuilder(name: string) =
 
     [<CustomOperation("actor")>]
     member __.Actor(dialog: StaticWindowGenerator, actor: string) : StaticWindowGenerator =
-        staticDialogWindow name actor dialog.Text dialog.StaticVariants dialog.OnEntry
+        staticDialogWindow name (Some(actor)) dialog.Text dialog.StaticVariants dialog.OnEntry
 
     [<CustomOperation("rand")>]
     member __.RandomOf(dialog: StaticWindowGenerator, text: string list) : StaticWindowGenerator =

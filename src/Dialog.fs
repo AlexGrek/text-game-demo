@@ -58,7 +58,7 @@ let pushWindowRef target = { TargetRef = target; Mod = None }
 
 type DialogWindow =
     { Name: string
-      Actor: string
+      Actor: string option
       Text: State -> RichText
       Variants: State -> DialogVariant list
       OnEntry: Option<State -> State> }

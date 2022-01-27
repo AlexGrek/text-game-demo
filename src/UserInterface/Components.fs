@@ -5,23 +5,25 @@ open Feliz.Router
 
 open Dialog
 open RichText
-open Game
 open State
-open Fable.SimpleJson
-open Fable.Core
 open Fable.Core.JS
 open FactsRenderer
-open LocationHub
 open ViewModel
+open HistoryRenderer
 
 type AnimationProgress =
     | NoAnimation
     | VariantChosen of int
 
 
+type OpenedPanel =
+    | NoPanel
+    | HistoryPanel
+    | FactsPanel
+
 type GlobalState =
     { DevTools: bool
-      FactsPanelOpened: bool
+      Panel: OpenedPanel
       GameState: State
       RenderedState: ViewOrError
       Animation: AnimationProgress }
@@ -40,7 +42,7 @@ type Components() =
                 { GameState = initialState
                   RenderedState = renderViewModel initialState
                   Animation = NoAnimation
-                  FactsPanelOpened = false
+                  Panel = NoPanel
                   DevTools = true }
             )
 
@@ -88,33 +90,57 @@ type Components() =
 
     [<ReactComponent>]
     static member HeaderPanel(s: GlobalState, ss: GlobalState -> unit) =
-        let factsButton =
-            Html.button [ prop.className "header-panel-button"
-                          prop.onClick (fun _ -> ss { s with FactsPanelOpened = true })
-
-                           ]
-
         Html.div [ prop.className "header-panel"
                    prop.children [ UiUtils.PanelUtils.PanelButton(
-                                       text = "Факты",
-                                       icon = "img/free-icon-bulb.png",
-                                       key = s.GameState.KnownFacts.Count,
-                                       onClick = (fun _ -> ss { s with FactsPanelOpened = true })
+                                       { text = "Факты";
+                                         icon = "img/free-icon-bulb.png";
+                                         key = s.GameState.KnownFacts.Count;
+                                         onClick = (fun _ -> ss { s with Panel = FactsPanel })
+                                       }
+                                   )
+                                   UiUtils.PanelUtils.PanelButton(
+                                       {
+                                        text = "История";
+                                        icon = "img/free-icon-comment-alt.png";
+                                        key = 999999999;
+                                        onClick = (fun _ -> ss { s with Panel = HistoryPanel })
+                                       }
                                    ) ] ]
+    
 
     [<ReactComponent>]
     static member PopupPanel(s: GlobalState, ss: GlobalState -> unit) =
-        let factsPanelStyle =
-            match (not s.FactsPanelOpened) with
+        let openClosedStyle property =
+            match (not property) with
             | true -> "animate__animated animate__fadeOutUp animate__faster"
             | false -> "animate__animated animate__fadeInDown animate__faster"
+        let anyPanelStyle = openClosedStyle (s.Panel <> NoPanel)
 
-        Html.div [ prop.className ("popup-panel " + factsPanelStyle)
-                   prop.children [ UiUtils.PanelUtils.PanelHeader(
-                                       "Факты",
-                                       fun _ -> ss { s with FactsPanelOpened = false }
+        let renderSpecificPanel name renderer = 
+            [
+                UiUtils.PanelUtils.PanelHeader(
+                                      { header = name;
+                                        onClose = fun _ -> ss { s with Panel = NoPanel }
+                                      }
                                    )
-                                   FactsPanelRenderer.FactsPanel(Seq.toList s.GameState.KnownFacts) ] ]
+                renderer
+            ]
+        
+        let genChildren =
+            match s.Panel with
+            | NoPanel -> []
+            | FactsPanel -> 
+                renderSpecificPanel
+                    "Факты"
+                    <| FactsPanelRenderer.FactsPanel(Seq.toList s.GameState.KnownFacts)
+            | HistoryPanel -> 
+                renderSpecificPanel 
+                    "История"
+                    <| HistoryPanelRenderer.HistoryPanel(Seq.toList s.GameState.InteractionHistory)
+
+
+        Html.div [ prop.className ("popup-panel " + anyPanelStyle)
+                   prop.children genChildren ]
 
 
     [<ReactComponent>]
@@ -124,7 +150,7 @@ type Components() =
             s: GlobalState,
             a: AnimationProgress,
             setstate: GlobalState -> unit,
-            setgs 
+            setUpdatedGameState 
         ) =
         let animation =
             match s.Animation with
@@ -139,6 +165,15 @@ type Components() =
 
         let toSimpleVariants (l: LocationHubVariantView list) =
             List.map (fun r -> r.Variant) l
+
+        let setgs action actionText = 
+            setUpdatedGameState
+            <| executeDialogStateUpdate
+                s.GameState
+                (toString loc.Text) 
+                (Some(loc.DisplayName)) // display location name as actor
+                action
+                actionText
 
         let renderedVariants = 
             List.choose renderVariant loc.Variants
@@ -189,7 +224,7 @@ type Components() =
             s: GlobalState,
             a: AnimationProgress,
             setstate: GlobalState -> unit,
-            setgs
+            setUpdatedGameState
         ) =
         let animation =
             match s.Animation with
@@ -201,6 +236,16 @@ type Components() =
             | Unlocked -> Some(Components.DialogButton, el)
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
+
+        let setgs action actionText = 
+            setUpdatedGameState
+            <| executeDialogStateUpdate
+                s.GameState
+                (toString w.Text) 
+                (w.Actor.asString())
+                action 
+                actionText
+
 
         Html.div [ prop.className "dialog-window"
                    prop.children [ DialogTextComponents.AuthorRenderer(w.Actor)
@@ -221,11 +266,11 @@ type Components() =
 
 
     [<ReactComponent>]
-    static member DialogButton(prp: DialogVariantView, (s: GlobalState), a, setter, setgs, i) =
+    static member DialogButton(prp: DialogVariantView, (s: GlobalState), a, setter, onClickAction, i) =
         let withAnimation () =
             setTimeout
                 (fun _ ->
-                    setgs (Engine.execute prp.Action s.GameState)
+                    onClickAction prp.Action prp.Text
                     |> ignore)
                 500
             |> ignore // no way to stop timeout

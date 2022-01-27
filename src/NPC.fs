@@ -112,7 +112,7 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
 
     let initialDialog =
         { DialogWindow.Name = "init"
-          Actor = ""
+          Actor = None
           Text =
             (stxt
              <| "Спросить, что " + publicName + " думает о...")

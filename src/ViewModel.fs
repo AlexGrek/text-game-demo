@@ -8,6 +8,11 @@ open Actions
 type DialogActorView =
     | UnknownActor of string
     | NoActor
+    with
+      member x.asString() =
+        match x with 
+        | UnknownActor(a) -> Some(a)
+        | NoActor -> None
 // todo: add known actor with link to person
 
 type DialogVariantView =
@@ -36,12 +41,16 @@ let filterOutVariants (getVariant: 'a -> DialogVariantView) (items: 'a list) =
 
     List.filter predicate items
 
+let makeActor = function
+  | None -> NoActor
+  | Some(actorId) -> UnknownActor(actorId)
+
 type DialogViewModel =
     { Actor: DialogActorView
       Text: RichText
       Variants: DialogVariantView list }
     static member OfDialogWindow (s: State) (d: Dialog.DialogWindow) =
-        { Actor = UnknownActor(d.Actor)
+        { Actor = makeActor(d.Actor)
           Text = d.Text s
           Variants =
             List.map (DialogVariantView.OfDialogVariant s) (d.Variants s)
@@ -105,3 +114,16 @@ type ViewOrError =
         | None -> View(View.OfState s)
 
 let renderViewModel (s: State) = ViewOrError.OfState s
+
+let executeStateUpdate action historyRecord oldState =
+  let s = 
+    match historyRecord with
+    | Some(recrd) -> { oldState with InteractionHistory = recrd :: oldState.InteractionHistory }
+    | None -> oldState
+  Engine.execute action s
+
+let executeDialogStateUpdate state text actor action actionText =
+  executeStateUpdate 
+    action
+    (Some({Text = text; Actor = actor; UserReply = actionText }))
+    state

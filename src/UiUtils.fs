@@ -14,18 +14,29 @@ let chooseStyleBasedOn cond baseStyle onTrue onFalse =
     else
         baseStyle + " " + onFalse
 
+type PanelHeaderModel = 
+    {
+        header: string;
+        onClose: unit -> unit
+    }
+
+type PanelButtonModel =
+    {
+        text: string; icon: string; key: int; onClick: unit -> unit
+    }
+
 type PanelUtils() =
     [<ReactComponent>]
-    static member PanelHeader(header: string, onClose: unit -> unit) =
+    static member PanelHeader(model) =
         Html.div [
             prop.className "panel-header"
             prop.children [
                 Html.p [
-                    prop.text header
+                    prop.text model.header
                 ]
                 Html.button [
                     prop.className "panel-close-button"
-                    prop.onClick (fun _ -> onClose())
+                    prop.onClick (fun _ -> model.onClose())
                     prop.children [
                         Html.img [
                             prop.alt "close"
@@ -37,19 +48,19 @@ type PanelUtils() =
         ]
 
     [<ReactComponent>]
-    static member PanelButton(text: string, icon: string, key: int, onClick: unit -> unit) =
+    static member PanelButton(model) =
         Html.button [
             prop.className "panel-button animate__animated animate__heartBeat"
-            prop.onClick (fun _ -> onClick())
-            prop.key key
+            prop.onClick (fun _ -> model.onClick())
+            prop.key model.key
             prop.children [
                 Html.img [
                     prop.className "panel-button-icon"
-                    prop.src icon
+                    prop.src model.icon
                 ]
                 Html.span [
                     prop.className "panel-button-span"
-                    prop.innerHtml text
+                    prop.innerHtml model.text
                 ]
             ]
         ]

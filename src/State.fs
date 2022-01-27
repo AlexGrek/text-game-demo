@@ -9,6 +9,13 @@ type UiState =
     | DialogMode of DialogState
     | LocationHubMode of LocationHubState
 
+type InteractionHistoryRecord =
+    {
+        Actor: string option
+        Text: string
+        UserReply: string
+    }
+
 type ErrorInfo = {
     Message: string
 }
@@ -16,6 +23,7 @@ type State =
     { UI: UiState
       UIStack: UiState list
       Previous: State option
+      InteractionHistory: InteractionHistoryRecord list
       Log: string list
       KnownFacts: Set<string>
       Iteration: int
@@ -26,6 +34,7 @@ let makeInitialStateInDialog (r: UReference) =
     { UI = DialogMode({ Reference = r })
       UIStack = []
       Previous = None
+      InteractionHistory = []
       Log = []
       KnownFacts = Set.empty
       Iteration = 0
