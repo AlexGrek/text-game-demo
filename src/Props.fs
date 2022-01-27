@@ -70,9 +70,9 @@ type IterationCounter(path: string) =
     static member Personal name propName =
         IterationCounter(name -. propName)
 
-type ListStringProperty(path: string) =
+type ListStringProperty(path: string, defv: string array) =
     inherit Property(path)
-    member x.DefaultValue = [||]
+    member x.DefaultValue = defv
     member x.Set value state = x.SetRaw(value :> obj) state
 
     member x.Get(state: State) =
@@ -95,7 +95,19 @@ type ListStringProperty(path: string) =
         else
             state
 
-    static member Personal name propName = ListStringProperty(name -. propName)
+    member x.RemoveOrDie item state =
+        if (x.Contains item state) then
+            x.RemoveIfPresent item state
+        else
+            failwith <| sprintf "Cannot remove item %A, found only %A" item (x.AsList state)
+
+    member x.RemoveIfPresent item state =
+        let newOne = Array.filter (fun x -> x <> item) (x.Get state)
+        x.Set newOne state
+
+    static member Personal name propName = ListStringProperty(name -. propName, [||])
+    static member PersonalWithDefault name propName defv = ListStringProperty(name -. propName, Seq.toArray defv)
+
 
 let asString (f: obj) = f :?> string
 

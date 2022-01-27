@@ -19,6 +19,7 @@
     <Compile Include="Person.fs" />
     <Compile Include="DSL.fs" />
     <Compile Include="Facts.fs" />
+    <Compile Include="Inventory.fs" />
     <Compile Include="NPC.fs" />
     <Compile Include="ViewModel.fs" />
     <Compile Include="StoryWriter.fs" />
