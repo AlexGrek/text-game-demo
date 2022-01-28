@@ -310,3 +310,59 @@ body::-webkit-scrollbar {
     flex-grow: 2;
     margin: 5pt 11pt;
 }
+
+.debug-data-record {
+    display: flex;
+    flex-direction: row;
+}
+
+.debug-data-record > p {
+    margin: 5pt;
+    border-bottom: 1px dashed #444b436b;
+    width: 90%;
+    font-family: "Consolas", monospace;
+    // font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
+.debug-key {
+    min-width: 16em;
+    text-align: right;
+}
+
+.debug-val {
+    color: darkblue;
+    font-size: large;
+}
+
+.history-panel-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+}
+
+.history-record-container {
+    margin: 5pt;
+    background-color: antiquewhite;
+    padding: 0 6pt;
+    max-width: 55em;
+    border: 1px solid darkslategrey;
+    box-shadow: 0 4px 12px #444b4367;
+}
+
+.history-record-reply {
+    font-size: large;
+    // border-right: 2px solid #444b43;
+    border-top: 2px solid #444b4367;
+    text-align: right;
+    position: relative;
+    padding-right: 4pt;
+}
+
+.history-actor {
+    margin: 0;
+    padding-left: 1em;
+    font-size: small;
+    color: grey;
+    border-left: 11pt solid grey;
+}
