@@ -189,6 +189,13 @@ body::-webkit-scrollbar {
     animation: typing 1s forwards;
 }
 
+.popup-panel-bg {
+    // position: absolute;
+    // width: 100%;
+    // height: 100%;
+    // // backdrop-filter: blur(1px);
+}
+
 .popup-panel {
     position: fixed;
     min-height: 20%;
@@ -196,14 +203,15 @@ body::-webkit-scrollbar {
     overflow-y: auto;
     border-bottom: 2pt solid black;
     z-index: 1000;
-    background:rgb(228, 212, 190);
+    backdrop-filter: blur(2px);
+    background:rgba(228, 212, 190, 0.917);
     box-shadow: 0 0 50em black;
     width: 100%;
 }
 
 .panel-header {
     display: flex;
-    border-bottom: 1pt solid black;
+    border-bottom: 1pt solid rgba(0, 0, 0, 0.724);
 }
 
 .panel-header p {
