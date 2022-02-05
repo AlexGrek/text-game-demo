@@ -4,12 +4,13 @@ open RoleModel
 open Data
 open State
 
-type Person(name: string) =
+type Person(name: string, dispalyName: string) =
     abstract member Roles: unit -> RoleModel
     abstract member DisplayName: State -> string
     default _.DisplayName (s: State) = name + "_UNNAMED"
     default _.Roles() = RoleModel([])
     member val Name = name
+    member val DefaultDisplayName = dispalyName
 
 let IN_LOCATION_ID = "inLocation"
 
@@ -24,3 +25,14 @@ let REPO_PERSONS = GlobalRepository<Person>()
 
 let savePers (p: Person) =
     save REPO_PERSONS p.Name p
+
+// was person met before or any fact about person known (by name)
+let doesKnowPersonName (p: string) (s: State) =
+    s.KnownPersons.ContainsKey p
+
+// make person known
+let meetPersonName (p: string) s =
+    if (doesKnowPersonName p s) then
+        s
+    else
+        {s with KnownPersons = s.KnownPersons.Add (p, Set.empty)}

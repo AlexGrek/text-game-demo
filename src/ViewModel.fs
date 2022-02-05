@@ -5,16 +5,18 @@ open LocationHub
 open PersonHub
 open State
 open Actions
+open Person
 
 type DialogActorView =
     | UnknownActor of string
+    | RealActor of Person * string
     | NoActor
     with
       member x.asString() =
         match x with 
         | UnknownActor(a) -> Some(a)
         | NoActor -> None
-// todo: add known actor with link to person
+        | RealActor(_, text) -> Some(text)
 
 type DialogVariantView =
     { Text: string
@@ -48,9 +50,13 @@ let filterOutVariants (getVariant: 'a -> DialogVariantView) (items: 'a list) =
 
     List.filter predicate items
 
-let makeActor = function
+let makeActor actor state =
+  match actor with
   | None -> NoActor
-  | Some(actorId) -> UnknownActor(actorId)
+  | Some(actorId) -> 
+    match (NPC.findDisplayName actorId state) with
+      | None -> UnknownActor(actorId)
+      | Some(pers, text) -> RealActor(pers, text)
 
 type DialogViewModel =
     { Actor: DialogActorView
@@ -59,7 +65,7 @@ type DialogViewModel =
     static member OfDialogWindow (s: State) (dwindow: Dialog.DialogWindow) =
       match dwindow with
       | Dialog.TextWindow(d) ->
-        { Actor = makeActor(d.Actor)
+        { Actor = makeActor d.Actor s
           Text = d.Text s
           Variants =
             List.map (DialogVariantView.OfDialogVariant s) (d.Variants s)
@@ -102,7 +108,7 @@ type PersonHubViewModel =
         Design = d.Design
         Variants =
           ((List.map (DialogVariantView.OfDialogVariant s) (d.Variants s))
-          @ (List.singleton <| DialogVariantView.MakeUnlockedVariant "спросить о..." (DSL.pushWindow d.FactsDialogLink)))
+          @ (List.singleton <| DialogVariantView.MakeUnlockedVariant "спросить о..." (DSL.doPushWindow d.FactsDialogLink)))
           |> filterOutVariants id
       }
 
@@ -125,6 +131,7 @@ type UIView =
           PersonHubView(PersonHubViewModel.OfPersonHub s hub)
 
 let renderFacts (set: Set<string>) =
+    printfn "rendering facts: %A" (Set.toList set)
     let cast (el: string) = Data.getGlobal Facts.REPO_FACTS el
     Seq.map cast set |> Seq.toList
 

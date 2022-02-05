@@ -5,7 +5,7 @@ open NPC
 open Person
 
 type Myself() =
-    inherit Person("myself")
+    inherit Person("myself", "Подсознание")
     let name = "myself"
 
     member val Naked = BoolProperty.Personal name "naked" true
@@ -22,7 +22,7 @@ type Myself() =
 
 
 type PolicemanJoe() =
-    inherit Person("joe")
+    inherit Person("joe", "Полицейський Джо")
     let n = "joe"
     override x.Roles() = 
         RoleModel.RoleModel([
@@ -31,10 +31,18 @@ type PolicemanJoe() =
         ])
     member val UserKnowsHisName = 
         Facts.createPersonalFact 
-            n 
+            n
             "nameIsKnown"
             "Его зовут Джо"
-            "Звание - лейтенант, фамилия - Коперник. Джо Коперник. Как-то так." 
+            "Звание - лейтенант, фамилия - Коперник. Джо Коперник. Как-то так."
+    member val knowsAgentCooper = 
+        Facts.createPersonalFact
+            n
+            "knowsCooper"
+            "Он знает, что есть некий Агент Купер"
+            "И он ничего не знает о личности того самого агента, что можно использовать"
+    member val ThinksIAmCooper = 
+        BoolProperty.Personal n "thinksIAmCooper" false
 
 type World(facts: GameDvaFacts.GameDvaFacts) =
     let name = "world"

@@ -17,13 +17,13 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             меня тоже...)
             """
             var (variant "посмотрим еще" {
-                action pop
+                action doPop
             })
             var (variant "какая нелепая смерть" {
-                action pop
+                action doPop
             })
             var (variant "может в карманах что завалялось" {
-                action (goToWindow "карманы")
+                action (doGoToWindow "карманы")
             })
         }
         window "карманы" {
@@ -39,7 +39,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             """
             var (popVariant "нет, я не буду, это бред")
             var (variant "что же?" {
-                    action (once "iphonefound" (goToWindow "карманы3") (goToWindow "айфон найден уже"))
+                    action (doOnce "iphonefound" (doGoToWindow "карманы3") (doGoToWindow "айфон найден уже"))
                 })
         }
         window "карманы3" {
@@ -49,12 +49,12 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             моих отпечатков не будет.
             """
             var (variant "оставить его в кармане, как было" {
-                action pop
+                action doPop
                 modify (facts.phoneFprints.Acquire)
                 modify (chars.Myself.IphoneTaken.Set false)
             })
             var (variant "взять и попытаться его разблокировать" {
-                action (goToWindow "айфон")
+                action (doGoToWindow "айфон")
                 modify (facts.phoneFprints.Deny)
                 modify (chars.Myself.IphoneTaken.Set true)
             })
@@ -64,21 +64,21 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
                 "Тут я находила телефон. Что мне с ним делать сейчас?"
                 "Телефона больше нет."
             var (locked "потерян телефон" hasPhoneInPicketOrInInventory "оставить его в кармане, как было" {
-                action pop
+                action doPop
                 modify (facts.phoneFprints.Acquire)
                 modify (chars.Myself.IphoneTaken.Set false)
             })
             var (locked "потерян телефон" hasPhoneInPicketOrInInventory "взять его" {
                 action 
-                    (cond (iPhoneUnlock.Get >> not)
-                        (goToWindow "айфон")
-                        (goToWindow "айфон попытка"))
+                    (doCond (iPhoneUnlock.Get >> not)
+                        (doGoToWindow "айфон")
+                        (doGoToWindow "айфон попытка"))
                 modify (facts.phoneFprints.Deny)
                 modify (chars.Myself.IphoneTaken.Set true)
             })
             var (hidden (hasPhoneInPicketOrInInventory >> not) "" {
                 text "уйти"
-                action pop
+                action doPop
             })
         }
         window "айфон" {
@@ -87,28 +87,28 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             Уже не узнаем. Пин кода я не знаю. Может, 3428? Гадать бесполезно. Остается только взять его с собой.
             """
             var (variant "оставить его в кармане, как было" {
-                action pop
+                action doPop
                 modify (facts.phoneFprints.Acquire)
                 modify (chars.Myself.IphoneTaken.Set false)
             })
             var (locked "уже попытались" (iPhoneUnlock.Get >> not) "набрать 3428" {
-                action (goToWindow "айфон попытка")
+                action (doGoToWindow "айфон попытка")
                 modify (iPhoneUnlock.Set true) 
             })
             var (locked "уже попытались" (iPhoneUnlock.Get >> not) "набрать 0451" {
-                action (goToWindow "айфон попытка")
+                action (doGoToWindow "айфон попытка")
                 modify (iPhoneUnlock.Set true) 
             })
             var (locked "уже попытались" (iPhoneUnlock.Get >> not) "набрать 1111" {
-                action (goToWindow "айфон попытка")
+                action (doGoToWindow "айфон попытка")
                 modify (iPhoneUnlock.Set true) 
             })
             var (locked "уже попытались" (iPhoneUnlock.Get >> not) "набрать 1234" {
-                action (goToWindow "айфон попытка")
+                action (doGoToWindow "айфон попытка")
                 modify (iPhoneUnlock.Set true)
             })
             var (locked "уже попытались" (iPhoneUnlock.Get >> not) "набрать 1337" {
-                action (goToWindow "айфон попытка")
+                action (doGoToWindow "айфон попытка")
                 modify (iPhoneUnlock.Set true)
             })
             var (popVariant "взять с собой")
@@ -120,7 +120,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             """
             var (popVariant "взять с собой")
             var (variant "положить его в карман, как было" {
-                action pop
+                action doPop
                 modify (facts.phoneFprints.Acquire)
                 modify (chars.Myself.IphoneTaken.Set false)
             })
@@ -159,7 +159,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             var ("предположить другой вариант" -- "вспомнить")
             var (hidden (facts.version.IsKnown) "" {
                 text "вернуться к телу"
-                action pop
+                action doPop
             })
         }
         window "вспомнить" {
@@ -167,7 +167,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             """
             var (hidden (facts.version.IsKnown) "" {
                 text "вернуться к телу"
-                action pop
+                action doPop
             })
             var ("проститутка" -- "проститутка")
             var ("частный детектив" -- "детектив")
@@ -279,10 +279,10 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
         window "init" {
             stxt "Лифт позволяет ехать куда угодно, но куда угодно мне не надо."
             var (variant "на первый" {
-                    action (once 
+                    action (doOnce 
                         "strangeLiftManHappened"
-                        (goToWindow "первый")
-                        (goToWindow "первый просто"))
+                        (doGoToWindow "первый")
+                        (doGoToWindow "первый просто"))
                     })
             var ("на последний" -- "последний")
             var (popVariant "выйти из лифта")
@@ -297,7 +297,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             var ("меня сковал страх" -- "последний3")
             var ("нажать кнопку \"стоп\"" -- "последний3")
             var (hidden (facts.afterlife.IsKnown) "в этот раз я точно покажу ему" {
-                action (goToWindow "последний4")
+                action (doGoToWindow "последний4")
             })
         }
         window "последний3" {
@@ -351,26 +351,26 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
                 ]
             actor "Шепот во тьме"
             var (variant "шагнуть во тьму" {
-                action (cond (facts.afterlife.IsKnown >> not)
-                            (goToWindow "firstTime")
-                            (goToWindow "onceAgain"))
+                action (doCond (facts.afterlife.IsKnown >> not)
+                            (doGoToWindow "firstTime")
+                            (doGoToWindow "onceAgain"))
             })
         }
         window "firstTime" {
             stxt "Я... мертва? Что происходит? Это сон? Это реальность? А где ангелочк... что? Что происходит?"
             var (variant "проснуться" {
-                action (moveWithStack "init.init" [])
+                action (doMoveWithStack "init.init" [])
                 modify (facts.afterlife.Acquire)
             })
         }
         window "onceAgain" {
             stxt "Я мертва. Снова. Неужели все начнется заново?"
             var (variant "проснуться" {
-                action (moveWithStack "init.init" [])
+                action (doMoveWithStack "init.init" [])
                 modify (facts.afterlife.Acquire)
             })
             var (variant "постараться не думать о смерти" {
-                action (moveWithStack "init.init" [])
+                action (doMoveWithStack "init.init" [])
                 modify (facts.afterlife.Acquire)
             })
         }
@@ -387,7 +387,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
               var (
                   variant "" {
                       text "перестать заниматься ерундой"
-                      action pop
+                      action doPop
                   }
               )
           }
@@ -440,7 +440,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             stxt """Шок от громкого звука прошел... кровь наполнила рот, я начинаю задыхаться... Сознание покидает меня, 
             я падаю и..."""
             var (variant "отпустить эту жизнь" {
-                action (pushWindow "смерть.init")
+                action (doPushWindow "смерть.init")
                 modify (facts.strangerKillsMe.Acquire)
             })
         }
@@ -469,7 +469,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             Темнеет в глазах... Звон... Боль... Теплота..."""
             var (variant "" {
                 text "умереть"
-                action (pushWindow "смерть.init")
+                action (doPushWindow "смерть.init")
                 modify (facts.strangerKillsMe.Acquire)
             })
         }

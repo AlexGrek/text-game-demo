@@ -133,6 +133,11 @@ let createAskAboutDialog (sysName: string) (talker: Talker) (ans: Map<string, Re
 let asTalker (p: Person) =
     (p.Roles().As TALKER_ROLE_ID) :?> Talker
 
+let REPO_DISPLAY_NAMES_MAPPING = Data.GlobalRepository<State -> string>()
+
+let saveDisplayNameMapping personID mapping =
+    Data.save<State -> string> REPO_DISPLAY_NAMES_MAPPING personID mapping |> ignore
+
 type NpcBuilderState =
     { SystemName: string
       DisplayName: State -> string
@@ -146,6 +151,8 @@ type NpcBuilderState =
 
         let askAbout =
             createAskAboutDialog x.SystemName talker x.FactReactions
+        
+        saveDisplayNameMapping x.SystemName x.DisplayName
 
         { Name = x.SystemName
           Description = x.Description
@@ -166,7 +173,7 @@ type npcBuilder(person: Person) =
 
     member __.Yield(_) : NpcBuilderState =
         { SystemName = person.Name
-          DisplayName = s name
+          DisplayName = s person.DefaultDisplayName
           FactReactions = Map.empty
           ItemGivenReactions = Map.empty
           Variants = s []
@@ -175,6 +182,9 @@ type npcBuilder(person: Person) =
 
     [<CustomOperation("name")>]
     member __.Name(nbs: NpcBuilderState, name: State -> string) = { nbs with DisplayName = name }
+
+    [<CustomOperation("staticname")>]
+    member __.Name(nbs: NpcBuilderState, name: string) = { nbs with DisplayName = s name }
 
     [<CustomOperation("fact")>]
     member __.Fact(nbs: NpcBuilderState, name: string, reaction: Reaction) =
@@ -211,8 +221,26 @@ type npcBuilder(person: Person) =
 
 let npc person = npcBuilder person
 
-let pushNpcDialog target =
-    { PersonHubRef = target; PushPersonDialog.Mod = None; SpecificAction = None }
+let doPushNpcDialog target =
+    { PersonHubRef = target; PushPersonDialog.Mod = None; SpecificAction = None } :> IAction
 
-let npcDialogVariant text target =
-    makeUnlockedVariant text (pushNpcDialog target)
+let doPushNpcDialogSpecific targetHub targetDialog =
+    { PersonHubRef = targetHub; PushPersonDialog.Mod = None; SpecificAction = Some(doPushWindow targetDialog) } :> IAction
+
+let doPushNpcDialogAction targetHub action =
+    { PersonHubRef = targetHub; PushPersonDialog.Mod = None; SpecificAction = Some(action) } :> IAction
+
+let npcDialogVariant text (target: Person) =
+    makeUnlockedVariant text (doPushNpcDialog target.Name)
+
+let npcDialogSpecificVariant text (target: Person) spec =
+    makeUnlockedVariant text (doPushNpcDialogSpecific target.Name spec)
+
+let npcDialogActionVariant text (target: Person) spec =
+    makeUnlockedVariant text (doPushNpcDialogAction target.Name spec)
+
+let findDisplayName name (s: State) =
+    if (REPO_DISPLAY_NAMES_MAPPING.ContainsKey name) then
+        Some(Data.getGlobal<Person> REPO_PERSONS name, s |> Data.getGlobal<State -> string> REPO_DISPLAY_NAMES_MAPPING name)
+    else
+        None

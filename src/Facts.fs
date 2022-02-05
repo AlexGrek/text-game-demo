@@ -1,6 +1,7 @@
 module Facts
 
 open State
+open DSL
 
 let makePersonalId person id =
     person + "::" + id
@@ -25,7 +26,7 @@ type Fact =
             | Some (m) -> m state
             | None -> state
         printfn "Accuired fact: %A %s" x.FactId x.Description
-        { newState with KnownFacts = state.KnownFacts.Add x.FactId }
+        { newState with KnownFacts = newState.KnownFacts.Add x.FactId }
     member x.IsKnown (state: State) =
         state.KnownFacts.Contains x.FactId
     member x.Deny (state: State) =
@@ -37,8 +38,23 @@ type Fact =
             else
                 state // do nothing if was unknown
 
+type PersonFact = 
+    {
+      FactId: string
+      PersonName: string
+      Name: string
+      Description: string
+    }
+    member x.IsKnown (state: State) =
+        state.KnownPersons.ContainsKey x.PersonName && 
+            state.KnownPersons.[x.PersonName].Contains x.Name
+    member x.Acquire state =
+        printfn "Accuired personal fact: %A %s" x.FactId x.Description
+        let newState = Person.meetPersonName x.PersonName state
+        { newState with KnownPersons = Map.add x.PersonName (newState.KnownPersons.[x.PersonName] .Add(x.FactId)) newState.KnownPersons }
+
 let REPO_FACTS = Data.GlobalRepository<Fact>()
-let REPO_FACTS_PERSONAL = Data.GlobalRepository<Fact>()
+let REPO_FACTS_PERSONAL = Data.GlobalRepository<PersonFact>()
 
 let createFact id name desc =
     { FactId = id
@@ -48,13 +64,12 @@ let createFact id name desc =
       ActionOnAcquisition = None }
     |> Data.save<Fact> REPO_FACTS id
 
-let createPersonalFact person id name desc =
-    { FactId = makePersonalId person id
+let createPersonalFact personName id name desc =
+    { FactId = id
+      PersonName = personName
       Description = desc
-      Deniable = false
-      Name = name
-      ActionOnAcquisition = None }
-    |> Data.save<Fact> REPO_FACTS_PERSONAL id
+      Name = name }
+    |> Data.save<PersonFact> REPO_FACTS_PERSONAL id
 
 let createFactDeniable id name desc =
     { FactId = id

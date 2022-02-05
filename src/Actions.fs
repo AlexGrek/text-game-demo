@@ -98,6 +98,42 @@ type Push =
                 | Some(old) -> Some(m >> old)
             { x with Push.Mod = newMod } :> IAction
 
+type PopPush =
+    { TargetRef: UReference; Mod: Option<State -> State> }
+    interface IAction with
+        member this.Links() : Link list = [ PushLink(this.TargetRef) ]
+
+        member x.Exec state =
+            state 
+            |> Option.defaultValue id x.Mod
+            |> popDialog
+            |> pushDialog x.TargetRef.D x.TargetRef.W
+        
+        member x.ComposeAfter m =
+            let newMod =
+                match x.Mod with
+                | None -> Some(m)
+                | Some(old) -> Some(m >> old)
+            { x with PopPush.Mod = newMod } :> IAction
+
+// move to another dialog without pushing anything to UI stack
+type Jump =
+    { TargetRef: UReference; Mod: Option<State -> State> }
+    interface IAction with
+        member this.Links() : Link list = [ JumpLink(this.TargetRef) ]
+
+        member x.Exec state =
+            state
+            |> Option.defaultValue id x.Mod
+            |> toDialog x.TargetRef.D x.TargetRef.W
+        
+        member x.ComposeAfter m =
+            let newMod =
+                match x.Mod with
+                | None -> Some(m)
+                | Some(old) -> Some(m >> old)
+            { x with Jump.Mod = newMod } :> IAction
+
 type PushLocation =
     { LocationRef: string; Mod: Option<State -> State> }
     interface IAction with

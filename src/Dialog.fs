@@ -52,7 +52,9 @@ let makeHiddenVariant predicate text action =
 
 let toWindow target = { Target = target }
 
-let pushWindowRef target = { TargetRef = target; Mod = None }
+let pushWindowRef target = { Push.TargetRef = target; Mod = None }
+
+let popPushWindowRef target = { PopPush.TargetRef = target; Mod = None }
 
 // the dialog itself
 

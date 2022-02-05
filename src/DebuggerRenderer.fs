@@ -10,12 +10,16 @@ type DebuggerPanelRenderer() =
                                    Html.div [ prop.className "debug-panel-container"
                                               prop.children (
                                                   List.map (fun (k, v) -> DebuggerPanelRenderer.DataFieldRenderer(k, v)) (Map.toList state.Data)
+                                              ) ]
+                                   Html.div [ prop.className "debug-panel-container"
+                                              prop.children (
+                                                  List.map (fun (k, v) -> DebuggerPanelRenderer.DataFieldRenderer(k, v)) (Map.toList state.KnownPersons)
                                               ) ] ]
                     ]
 
     static member DataFieldRenderer(key, value) =
         Html.div [ prop.className "debug-data-record"
-                   prop.children [ 
+                   prop.children [
                     Html.p [
                         prop.className "debug-key"
                         prop.text key

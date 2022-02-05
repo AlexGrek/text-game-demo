@@ -12,13 +12,6 @@ let build () =
     Engine.reset ()
     let facts = GameDvaFacts.GameDvaFacts()
     let chars = GameDvaCharacters.Characters(facts)
-    
-    let policemanJoeTalkerTalk = 
-        NPC.createAskAboutDialog 
-            "Джо"
-            (NPC.asTalker chars.PolicemanJoe)
-            (Map.empty 
-                |> Map.add facts.deadBodyFound.FactId (NPC.Say("Я сам шокирован этим. Мы не ожидали, что все будет именно так")))
 
     let wInit =
         window "init" {
@@ -31,7 +24,7 @@ let build () =
             var ("это всего лишь сон" -- "2")
             var (
                 hidden (facts.afterlife.IsKnown) "что со мной только что произошло" {
-                    action (goToWindow "я жива")
+                    action (doGoToWindow "я жива")
                 }
             )
         }
@@ -45,7 +38,7 @@ let build () =
             var (
                 variant "встать" {
                     text "посмотреть вокруг"
-                    action (goToWindow "коридор")
+                    action (doGoToWindow "коридор")
                 }
             )
 
@@ -54,12 +47,12 @@ let build () =
             var (
                 variant "2" {
                     text "попытаться все же уснуть"
-                    action (goToWindow "init")
+                    action (doGoToWindow "init")
                 }
             )
             var (
                 hidden (facts.afterlife.IsKnown) "я тут уже была!" {
-                    action (goToWindow "я помню")
+                    action (doGoToWindow "я помню")
                 }
             )
         }
@@ -82,7 +75,7 @@ let build () =
 
             var (
                 hidden (chars.World.PoliceCameAlready) "открыть дверь" {
-                    action (pushWindow "police.initflat")
+                    action (doPushWindow "police.initflat")
                 }
             )
 
@@ -91,9 +84,9 @@ let build () =
             var (
                 variant "" {
                     text "пойти на кухню"
-                    action (cond (chars.World.DeadBodyFoundThisLife.Get >> not)
-                                (pushWindow "кухня.шок")
-                                (pushWindow "кухня.init"))
+                    action (doCond (chars.World.DeadBodyFoundThisLife.Get >> not)
+                                (doPushWindow "кухня.шок")
+                                (doPushWindow "кухня.init"))
                 }
             )
 
@@ -102,10 +95,10 @@ let build () =
                     text "бежать через входную дверь"
 
                     action (
-                        cond
+                        doCond
                             (chars.Myself.Naked.Get >> not)
-                            (pushWindow "снаружи.init")
-                            (goToWindow "не могу выйти голая")
+                            (doPushWindow "снаружи.init")
+                            (doGoToWindow "не могу выйти голая")
                     )
 
                     modify (facts.deadBodyFound.Acquire)
@@ -142,7 +135,7 @@ let build () =
 
               var ("прожить все заново" -- "коридор")
               var (variant "рвануть на кухню" {
-                  action (moveWithStack "кухня.шок" [ "init.коридор" ])
+                  action (doMoveWithStack "кухня.шок" [ "init.коридор" ])
               })
           } 
           window "не могу выйти голая" {
@@ -151,11 +144,11 @@ let build () =
               var (
                   locked "хз где" (facts.shkafSeen.IsKnown) "" {
                       text "найти хоть какую-то одежду"
-                      action (moveWithStack "шкаф.init" [ "init.коридор" ])
+                      action (doMoveWithStack "шкаф.init" [ "init.коридор" ])
                   }
               )
 
-              var (variant "отказаться от этой идеи" { action (goToWindow "коридор") })
+              var (variant "отказаться от этой идеи" { action (doGoToWindow "коридор") })
           } ]
     |> ignore
 
@@ -180,14 +173,14 @@ let build () =
                       text "заорать"
 
                       action (
-                          cond (facts.deadBodyFound.IsKnown >> not) (pushWindow "utils.не буду") (goToWindow "заорать")
+                          doCond (facts.deadBodyFound.IsKnown >> not) (doPushWindow "utils.не буду") (doGoToWindow "заорать")
                       )
                   }
               )
 
               var ("станцевать" --- "utils.не буду")
               var ("закрыть окно" -- "init")
-              var (hidden (chars.Myself.IphoneTaken.Get) "выбросить телефон в окно" { action (goToWindow "выбросить") })
+              var (hidden (chars.Myself.IphoneTaken.Get) "выбросить телефон в окно" { action (doGoToWindow "выбросить") })
           }
           window "заорать" {
               onEntry (facts.screamedInWindow.Acquire)
@@ -223,7 +216,7 @@ let build () =
             var (
                 variant "" {
                     text "выйти из санузла"
-                    action pop
+                    action doPop
                 }
             )
 
@@ -271,7 +264,7 @@ let build () =
               var (
                   variant "" {
                       text "Отлично :)"
-                      action (goToWindow "init")
+                      action (doGoToWindow "init")
                   }
               )
           }
@@ -349,7 +342,7 @@ let build () =
               var (
                   variant "" {
                       text "стругануть"
-                      action (moveWithStack "санузел.стругануть" [ "init.коридор" ])
+                      action (doMoveWithStack "санузел.стругануть" [ "init.коридор" ])
                   }
               )
           }
@@ -364,14 +357,14 @@ let build () =
               var (
                   variant "" {
                       text "не могу на это смотреть больше"
-                      action (moveWithStack "санузел.стругануть" [ "init.коридор" ])
+                      action (doMoveWithStack "санузел.стругануть" [ "init.коридор" ])
                   }
               )
 
               var (
                   variant "" {
                       text "отойти от тела"
-                      action (goToWindow "init")
+                      action (doGoToWindow "init")
                   }
               )
           } ]
@@ -386,21 +379,21 @@ let build () =
             var (popVariant "уйти")
             var (hidden (fun x -> chars.Myself.Naked.Get x && facts.shkafSeen.IsKnown x) "надеть спортивную форму" {
                 modify (chars.Myself.WearSport)
-                action (goToWindow "одежда")
+                action (doGoToWindow "одежда")
             })
             var (hidden (fun x -> chars.Myself.Naked.Get x && facts.shkafSeen.IsKnown x) "надеть мужской костюм" {
                 modify (chars.Myself.WearOffice)
-                action (goToWindow "одежда")
+                action (doGoToWindow "одежда")
             })
             var (hidden (fun x -> chars.Myself.Naked.Get x |> not) "раздеться" {
                 modify (chars.Myself.GetNaked)
-                action (goToWindow "разделась")
+                action (doGoToWindow "разделась")
             })
 
             var (
                 variant "" {
                     text "заглянуть внутрь"
-                    action (cond (facts.shkafSeen.IsKnown >> not) (goToWindow "осмотр") (goToWindow "ничего"))
+                    action (doCond (facts.shkafSeen.IsKnown >> not) (doGoToWindow "осмотр") (doGoToWindow "ничего"))
                 }
             )
           }
@@ -428,7 +421,7 @@ let build () =
               var (
                   variant "" {
                       text "бросить поиски"
-                      action (goToWindow "init")
+                      action (doGoToWindow "init")
                       modify facts.shkafSeen.Acquire
                   }
               )
@@ -471,7 +464,7 @@ let build () =
             var (
                 variant "" {
                     text "ясно"
-                    action pop
+                    action doPop
                 }
             )
           }
@@ -481,7 +474,7 @@ let build () =
               var (
                   variant "" {
                       text "вернусь сюда позже, когда это будет сделано разработчиком"
-                      action pop
+                      action doPop
                   }
               )
           }
@@ -491,7 +484,7 @@ let build () =
               var (
                   variant "" {
                       text "понятно"
-                      action pop
+                      action doPop
                   }
               )
           }
@@ -501,7 +494,7 @@ let build () =
               var (
                   variant "" {
                       text "ладно"
-                      action pop
+                      action doPop
                   }
               )
           } ]

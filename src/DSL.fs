@@ -5,6 +5,7 @@ open Dialog
 open Actions
 open Data
 open LocationHub
+open Person
 
 type StaticWindowGenerator =
     { Name: string
@@ -27,7 +28,7 @@ type DialogVariantGen =
         | [] -> x.V
         | _ -> { x.V with Action = List.fold (fun acc el -> acc.ComposeAfter el) x.V.Action x.Modifiers }
 
-type WindowBuilder(name: string, defaultActor: string) =
+type WindowBuilder(name: string, defaultActor: string option) =
     let staticDialogWindow name actor textGen variants onEntry =
         { Name = name
           Actor = actor
@@ -36,7 +37,7 @@ type WindowBuilder(name: string, defaultActor: string) =
           OnEntry = onEntry }
 
     member __.Yield(_) : StaticWindowGenerator =
-        staticDialogWindow name None (stxt "") [] None
+        staticDialogWindow name defaultActor (stxt "") [] None
 
     member __.Run(dialog: StaticWindowGenerator) : DialogWindow = TextWindow(dialog.Build())
 
@@ -76,6 +77,8 @@ type WindowBuilder(name: string, defaultActor: string) =
         <| Some(action)
 
 let window x = WindowBuilder(x, None)
+
+let windowWithActor x act = WindowBuilder(x, Some(act))
 
 type VariantBuilder(text: string, createVariant: string -> IAction -> DialogVariant) =
     member __.Yield(_) : DialogVariantGen =
@@ -178,62 +181,71 @@ let (---) (x: string) (y: string) =
 
 // ACTIONS
 
-let pop = { Pop.Mod = None }
+let doPop = { Pop.Mod = None } :> IAction
 
-let popLoc = { PopToLocation.Mod = None }
+let doPopLoc = { PopToLocation.Mod = None } :> IAction
 
-let pushWindow target =
+let doPushWindow target =
     let reference = UReference.Parse target
-    (pushWindowRef reference)
+    (pushWindowRef reference) :> IAction
 
-let pushLoc target = { LocationRef = target; PushLocation.Mod = None }
+let doPopPushWindow target =
+    let reference = UReference.Parse target
+    (popPushWindowRef reference) :> IAction
 
-let changeLoc target = { LocationRef = target; ChangeLocation.Mod = None }
+let doPushLoc target =
+    { LocationRef = target
+      PushLocation.Mod = None } :> IAction
 
-let once (propName: string) actionOnce actionOther =
+let doChangeLoc target =
+    { LocationRef = target
+      ChangeLocation.Mod = None } :> IAction
+
+let doOnce (propName: string) actionOnce actionOther =
     { Property = Props.BoolProperty("once::" + propName, false)
       DoOnce = actionOnce
-      DoOther = actionOther }
+      DoOther = actionOther } :> IAction
 
-let goToWindow target = { Target = target }
+let doGoToWindow target = { Target = target } :> IAction
 
-let popVariant text = makeUnlockedVariant text (pop)
+let popVariant text = makeUnlockedVariant text (doPop)
 
-let popLocVariant text = makeUnlockedVariant text (popLoc)
+let popLocVariant text = makeUnlockedVariant text (doPopLoc)
 
-let pushLocVariant text target = makeUnlockedVariant text (pushLoc target)
+let pushLocVariant text target =
+    makeUnlockedVariant text (doPushLoc target)
 
-let moveWithStackRef targetRef stackRef =
+let doMoveWithStackRef targetRef stackRef =
     { Target = targetRef
       Mod = None
-      Stack = stackRef }
+      Stack = stackRef } :> IAction
 
-let moveWithStack target stack =
-    moveWithStackRef (UReference.Parse target)
+let doMoveWithStack target stack =
+    doMoveWithStackRef (UReference.Parse target)
     <| List.map UReference.Parse stack
 
-let cond p onTrue onFalse =
+let doCond p onTrue onFalse =
     { Predicate = p
       OnTrue = onTrue
-      OnFalse = onFalse }
+      OnFalse = onFalse } :> IAction
 
-let getPeopleOnLocation name (state: State) = 
-    let createForPerson (p: Person.Person) =
-        {
-            Pic = None
-            Variant = 
-                makeUnlockedVariant 
-                    (p.DisplayName state)
-                    { TargetRef = { D = p.Name; W = "init" }
-                      Mod = None }
-        }
-    let inLocation (l: Person.InLocation) =
-        (l.CurrentLocation.Get state) = name
-    let checkPerson (p: Person.Person) =
-        match (Person.asInLocation p) with
-        | Some(loc) -> inLocation loc
+let getPeopleOnLocation name (state: State) =
+    let createForPerson (p: Person) =
+        { Pic = None
+          Variant =
+            makeUnlockedVariant
+                (p.DisplayName state)
+                { TargetRef = { D = p.Name; W = "init" }
+                  Mod = None } }
+
+    let inLocation (l: InLocation) = (l.CurrentLocation.Get state) = name
+
+    let checkPerson (p: Person) =
+        match (asInLocation p) with
+        | Some (loc) -> inLocation loc
         | None -> false
-    values Person.REPO_PERSONS
+
+    values REPO_PERSONS
     |> Seq.filter checkPerson
     |> Seq.toList
     |> List.map createForPerson
@@ -243,11 +255,13 @@ type LocationHubStaticVariants =
       Variants: DialogVariant list
       StaticPersons: LocationHubVariant list }
     member x.Build() =
-        { x.LocationHub with 
+        { x.LocationHub with
             Variants = s (List.rev x.Variants)
             // include both static persons and dynamic persons
-            Persons = fun state -> (List.rev x.StaticPersons) @ (x.LocationHub.Persons state)
-         }
+            Persons =
+                fun state ->
+                    (List.rev x.StaticPersons)
+                    @ (x.LocationHub.Persons state) }
 
 
 type LocationHubBuilder(name: string) =
@@ -268,35 +282,39 @@ type LocationHubBuilder(name: string) =
 
     [<CustomOperation("locVariant")>]
     member __.LocVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
-        { loc with LocationHub =
-                    { loc.LocationHub with
-                        Locations =
-                            List.rev ((makePicturelessLocationVariant variant) :: loc.LocationHub.Locations)}
-        }
+        { loc with
+            LocationHub =
+                { loc.LocationHub with
+                    Locations =
+                        List.rev (
+                            (makePicturelessLocationVariant variant)
+                            :: loc.LocationHub.Locations
+                        ) } }
 
     [<CustomOperation("design")>]
     member __.Des(loc: LocationHubStaticVariants, design: HubDesign.HubDesign) : LocationHubStaticVariants =
-        { loc with LocationHub =
-                    { loc.LocationHub with
-                        Design = design }
-        }
+        { loc with LocationHub = { loc.LocationHub with Design = design } }
 
-    
+
     [<CustomOperation("locTarget")>]
     member __.LocVar(loc: LocationHubStaticVariants, toName: string, target: string) : LocationHubStaticVariants =
-        let variant = variant toName {
-            pushLoc target
-        }
-        { loc with LocationHub =
-                    { loc.LocationHub with
-                        Locations =
-                            List.rev ((makePicturelessLocationVariant variant) :: loc.LocationHub.Locations)}
-        }
+        let variant = variant toName { pushLoc target }
+
+        { loc with
+            LocationHub =
+                { loc.LocationHub with
+                    Locations =
+                        List.rev (
+                            (makePicturelessLocationVariant variant)
+                            :: loc.LocationHub.Locations
+                        ) } }
 
     [<CustomOperation("personVariant")>]
     member __.PersVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
-        { loc with StaticPersons =
-                    (makePicturelessLocationVariant variant) :: loc.StaticPersons}
+        { loc with
+            StaticPersons =
+                (makePicturelessLocationVariant variant)
+                :: loc.StaticPersons }
 
 
     [<CustomOperation("stxt")>]
@@ -322,3 +340,24 @@ type LocationHubBuilder(name: string) =
         { loc with Variants = variant :: loc.Variants }
 
 let location name = LocationHubBuilder name
+
+// was person met before or any fact about person known
+let doesKnowPerson (p: Person) (s: State) = s.KnownPersons.ContainsKey <| p.Name
+
+// make person known
+let meetPerson (p: Person) s =
+    if (doesKnowPerson p s) then
+        s
+    else
+        { s with KnownPersons = s.KnownPersons.Add(p.Name, Set.empty) }
+
+let proxyWindow name (proxyAction: State -> IAction) =
+    Proxy(
+        { ProxyWindow.Name = name
+          Action = proxyAction }
+    )
+
+let doJump target =
+    let reference = UReference.Parse target
+    {Actions.Jump.TargetRef = reference; Mod = None}
+    :> IAction

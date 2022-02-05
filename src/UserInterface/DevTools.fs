@@ -46,7 +46,7 @@ type Components() =
                         prop.innerHtml "Error state:"
                     ]
                     Html.textarea [
-                        prop.value (Json.serialize<State> state)
+                        prop.value (Json.serialize<State> {state with InteractionHistory = []})
                         prop.style [ style.minHeight 100; style.minWidth 600 ]
                     ]
                     

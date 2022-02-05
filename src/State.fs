@@ -28,6 +28,7 @@ type State =
       InteractionHistory: InteractionHistoryRecord list
       Log: string list
       KnownFacts: Set<string>
+      KnownPersons: Map<string, Set<string>>
       Iteration: int
       Data: Map<string, obj>
       Error: ErrorInfo option }
@@ -39,6 +40,7 @@ let makeInitialStateInDialog (r: UReference) =
       InteractionHistory = []
       Log = []
       KnownFacts = Set.empty
+      KnownPersons = Map.empty
       Iteration = 0
       Error = None
       Data = Map.empty }
