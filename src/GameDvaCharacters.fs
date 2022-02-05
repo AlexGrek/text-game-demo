@@ -29,6 +29,12 @@ type PolicemanJoe() =
             InLocation(x.Name, "kitchen")
             Talker(x.Name, DefaultBasicAnswers, DontKnow)
         ])
+    member val UserKnowsHisName = 
+        Facts.createPersonalFact 
+            n 
+            "nameIsKnown"
+            "Его зовут Джо"
+            "Звание - лейтенант, фамилия - Коперник. Джо Коперник. Как-то так." 
 
 type World(facts: GameDvaFacts.GameDvaFacts) =
     let name = "world"

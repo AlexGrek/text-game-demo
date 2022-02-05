@@ -2,6 +2,17 @@ module Facts
 
 open State
 
+let makePersonalId person id =
+    person + "::" + id
+
+// General fact IDs contains only words
+let isGeneral (s: string) =
+    not <| s.Contains("::")
+
+// Personal fact IDs contains :: as separator between person ID and fact ID
+let isPersonal (s: string) = 
+    not <| isGeneral s
+
 type Fact =
     { FactId: string
       Description: string
@@ -27,6 +38,7 @@ type Fact =
                 state // do nothing if was unknown
 
 let REPO_FACTS = Data.GlobalRepository<Fact>()
+let REPO_FACTS_PERSONAL = Data.GlobalRepository<Fact>()
 
 let createFact id name desc =
     { FactId = id
@@ -35,6 +47,14 @@ let createFact id name desc =
       Name = name
       ActionOnAcquisition = None }
     |> Data.save<Fact> REPO_FACTS id
+
+let createPersonalFact person id name desc =
+    { FactId = makePersonalId person id
+      Description = desc
+      Deniable = false
+      Name = name
+      ActionOnAcquisition = None }
+    |> Data.save<Fact> REPO_FACTS_PERSONAL id
 
 let createFactDeniable id name desc =
     { FactId = id
@@ -68,8 +88,9 @@ let lookupFact id =
         <| sprintf "Cannot lookup non-exsistent fact: %s; Facts exist: %A" id (Data.dumpGlobalKeys<Fact> REPO_FACTS)
     Data.getGlobal<Fact> REPO_FACTS id
     
-let listKnownFacts (state: State) =
+let listKnownFactsGeneral (state: State) =
     Seq.toList state.KnownFacts
+    |> List.filter isGeneral
 
 let listAllFacts() =
     Data.dumpGlobalKeys REPO_FACTS

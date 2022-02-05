@@ -27,7 +27,7 @@ type DialogVariantGen =
         | [] -> x.V
         | _ -> { x.V with Action = List.fold (fun acc el -> acc.ComposeAfter el) x.V.Action x.Modifiers }
 
-type WindowBuilder(name: string) =
+type WindowBuilder(name: string, defaultActor: string) =
     let staticDialogWindow name actor textGen variants onEntry =
         { Name = name
           Actor = actor
@@ -75,7 +75,7 @@ type WindowBuilder(name: string) =
         staticDialogWindow name dialog.Actor dialog.Text dialog.StaticVariants
         <| Some(action)
 
-let window x = WindowBuilder(x)
+let window x = WindowBuilder(x, None)
 
 type VariantBuilder(text: string, createVariant: string -> IAction -> DialogVariant) =
     member __.Yield(_) : DialogVariantGen =

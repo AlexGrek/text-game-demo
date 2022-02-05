@@ -13,7 +13,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
     
     npc chars.PolicemanJoe {
         stxt "Обычный мусор"
-        fact 
+        fact
             facts.afterlife
             DontBelieve
     }
