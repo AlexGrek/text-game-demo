@@ -157,7 +157,7 @@ let makeDialogWindowsFromList (lst: DialogWindow list) =
     |> Map.ofList
 
 let saveDialog (dialog: Dialog) =
-    printfn "Saving dialog %A with windows %A" dialog.Name dialog.DialogWindows
+    // printfn "Saving dialog %A with windows %A" dialog.Name dialog.DialogWindows
     Data.save<Dialog> REPO_DIALOG dialog.Name dialog
 
 let createDialog name windows =

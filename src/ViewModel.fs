@@ -2,6 +2,7 @@ module ViewModel
 
 open RichText
 open LocationHub
+open PersonHub
 open State
 open Actions
 
@@ -23,6 +24,12 @@ type DialogVariantView =
         { Text = d.Text
           Action = d.Action
           IsLocked = d.IsLocked s }
+    static member MakeUnlockedVariant (t : string) (act: IAction) =
+      {
+        Text = t
+        Action = act
+        IsLocked = Dialog.Unlocked
+      }
 
 type LocationHubVariantView =
     { Pic: string option
@@ -83,9 +90,26 @@ type LocationHubViewModel =
           |> filterOutVariants (fun (a: LocationHubVariantView) -> a.Variant)
       }
 
+type PersonHubViewModel =
+    { Text: RichText
+      DisplayName: string
+      Design: HubDesign.HubDesign
+      Variants: DialogVariantView list }
+    static member OfPersonHub (s: State) (d: PersonHub) =
+      {
+        Text = d.Description s
+        DisplayName = d.Name //TODO: change this to actual display name
+        Design = d.Design
+        Variants =
+          ((List.map (DialogVariantView.OfDialogVariant s) (d.Variants s))
+          @ (List.singleton <| DialogVariantView.MakeUnlockedVariant "спросить о..." (DSL.pushWindow d.FactsDialogLink)))
+          |> filterOutVariants id
+      }
+
 type UIView =
     | DialogView of DialogViewModel
     | LocaitionHubView of LocationHubViewModel
+    | PersonHubView of PersonHubViewModel
     static member OfUiState(s: State) =
         match s.UI with
         | DialogMode (dstate) ->
@@ -96,6 +120,9 @@ type UIView =
         | LocationHubMode(loc) ->
           let hub = Data.getGlobal REPO_LOCATIONS loc.LocReference
           LocaitionHubView(LocationHubViewModel.OfLocationHub s hub)
+        | PersonHubMode(personHub) ->
+          let hub = Data.getGlobal REPO_PERSON_HUBS personHub.PersonHubReference
+          PersonHubView(PersonHubViewModel.OfPersonHub s hub)
 
 let renderFacts (set: Set<string>) =
     let cast (el: string) = Data.getGlobal Facts.REPO_FACTS el

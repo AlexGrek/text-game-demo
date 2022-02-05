@@ -4,10 +4,12 @@ open Data
 
 type DialogState = { Reference: UReference }
 type LocationHubState = { LocReference: string }
+type PersonHubState = { PersonHubReference: string }
 
 type UiState = 
     | DialogMode of DialogState
     | LocationHubMode of LocationHubState
+    | PersonHubMode of PersonHubState
 
 type InteractionHistoryRecord =
     {
@@ -50,6 +52,7 @@ let private changeUIDialogWindow refs =
     function
     | DialogMode (ds) -> DialogMode({ ds with Reference = { ds.Reference with W = refs } })
     | LocationHubMode (_) -> failwith "cannot move to dialog window while in location hub"
+    | PersonHubMode (_) -> failwith "cannot move to dialog window while in person hub"
 
 let private setUIDialog d w =
     DialogMode({ Reference = { W = w; D = d } })
@@ -72,6 +75,11 @@ let pushDialog d w s =
 let pushLocation name s =
     { iterate s with
         UI = LocationHubMode({LocReference = name})
+        UIStack = s.UI :: s.UIStack }
+
+let pushPerson name s =
+    { iterate s with
+        UI = PersonHubMode({PersonHubReference = name})
         UIStack = s.UI :: s.UIStack }
 
 let popDialog s =

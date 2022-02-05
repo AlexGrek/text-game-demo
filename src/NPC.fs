@@ -5,6 +5,8 @@ open Props
 open Dialog
 open Person
 open State
+open PersonHub
+open Actions
 
 type BasicAnswers =
     { DontKnow: string list
@@ -44,6 +46,7 @@ let TALKER_ROLE_ID = "talker"
 
 type Talker(name: string, basicAnswers: BasicAnswers, defaultReaction: Reaction) =
     inherit RoleModel.Role(TALKER_ROLE_ID)
+
     let knownFactsProp =
         ListStringProperty.Personal name "knownFacts"
 
@@ -71,8 +74,8 @@ let private randTextWindow (a: Talker) name textOptions exitButton =
         var (popVariant exitButton)
     }
 
-let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string, Reaction>) =
-    let dialogName = talker.Name + "_ask"
+let createAskAboutDialog (sysName: string) (talker: Talker) (ans: Map<string, Reaction>) =
+    let dialogName = sysName + "_ask"
 
     let generateAvailableFacts =
         let createFactVariant (fid: string) =
@@ -116,7 +119,7 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
           Actor = None
           Text =
             (stxt
-             <| "Спросить, что " + publicName + " думает о...")
+             <| "Спросить, что " + talker.Name + " думает о...")
           Variants = s (endDialog :: variants)
           OnEntry = None }
 
@@ -127,18 +130,89 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
     let dialog = createDialog dialogName ws
     dialogName + ".init"
 
-let asTalker(p: Person) =
+let asTalker (p: Person) =
     (p.Roles().As TALKER_ROLE_ID) :?> Talker
 
-type NpcBuilderState = {
-    DisplayName: State -> string
-    FactReactions: Map<string, Reaction>
-    ItemGivenReactions: Map<string, Reaction>
-} 
-    with
-        member x.Build person =
-            let talker = asTalker person
-            createAskAboutDialog talker.Name talker x.FactReactions
+type NpcBuilderState =
+    { SystemName: string
+      DisplayName: State -> string
+      FactReactions: Map<string, Reaction>
+      Variants: State -> DialogVariant list
+      StaticVariants: DialogVariant list
+      ItemGivenReactions: Map<string, Reaction>
+      Description: State -> RichText.RichText }
+    member x.Build person =
+        let talker = asTalker person
 
-// type npcBuilder(person: Person) = 
-    
+        let askAbout =
+            createAskAboutDialog x.SystemName talker x.FactReactions
+
+        { Name = x.SystemName
+          Description = x.Description
+          Design = HubDesign.defaultDesign
+          FactsDialogLink = askAbout
+          Variants =
+            (fun s ->
+                x.Variants s
+                @ x.StaticVariants
+                  @ (List.singleton (popVariant "уйти"))) }
+        |> Data.save<PersonHub> REPO_PERSON_HUBS x.SystemName
+
+
+type npcBuilder(person: Person) =
+    let name =
+        let talker = asTalker person
+        talker.Name
+
+    member __.Yield(_) : NpcBuilderState =
+        { SystemName = person.Name
+          DisplayName = s name
+          FactReactions = Map.empty
+          ItemGivenReactions = Map.empty
+          Variants = s []
+          StaticVariants = []
+          Description = stxt name }
+
+    [<CustomOperation("name")>]
+    member __.Name(nbs: NpcBuilderState, name: State -> string) = { nbs with DisplayName = name }
+
+    [<CustomOperation("fact")>]
+    member __.Fact(nbs: NpcBuilderState, name: string, reaction: Reaction) =
+        { nbs with FactReactions = nbs.FactReactions.Add(name, reaction) }
+
+    [<CustomOperation("fact")>]
+    member __.Fact(nbs: NpcBuilderState, fact: Facts.Fact, reaction: Reaction) =
+        { nbs with FactReactions = nbs.FactReactions.Add(fact.FactId, reaction) }
+
+    [<CustomOperation("itemGiven")>]
+    member __.ItemGiven(nbs: NpcBuilderState, name: string, reaction: Reaction) =
+        { nbs with FactReactions = nbs.ItemGivenReactions.Add(name, reaction) }
+
+    [<CustomOperation("stxt")>]
+    member __.Stxt(loc: NpcBuilderState, text: string) : NpcBuilderState = { loc with Description = stxt text }
+
+    [<CustomOperation("ptxt")>]
+    member __.Ptxt(loc: NpcBuilderState, text: string) : NpcBuilderState = { loc with Description = ptxt text }
+
+    [<CustomOperation("ctxt")>]
+    member __.Ctxt(loc: NpcBuilderState, predicate: State -> bool, text1: string, text2: string) : NpcBuilderState =
+        { loc with Description = ctxt predicate text1 text2 }
+
+    [<CustomOperation("var")>]
+    member __.Var(loc: NpcBuilderState, variant: DialogVariant) =
+        { loc with StaticVariants = variant :: loc.StaticVariants }
+
+    [<CustomOperation("variants")>]
+    member __.Vars(loc: NpcBuilderState, variants: State -> DialogVariant list) = { loc with Variants = variants }
+
+    member __.Run(loc: NpcBuilderState) =
+        printfn "initializing NPC %s" loc.SystemName
+        loc.Build person
+
+let npc person = npcBuilder person
+
+let pushNpcDialog target =
+    { PersonHubRef = target; PushPersonDialog.Mod = None; SpecificAction = None }
+
+let npcDialogVariant text target =
+    makeUnlockedVariant text (pushNpcDialog target)

@@ -12,11 +12,10 @@ type PersonHubVariant = {
 }
 
 type PersonHub = {
-    Locations: PersonHubVariant list
-    Persons: State -> PersonHubVariant list
     Variants: State -> DialogVariant list
     Description: State -> RichText
     Name: string
+    FactsDialogLink: string
     Design: HubDesign
 }
 

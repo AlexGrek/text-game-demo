@@ -9,7 +9,7 @@ let splitByDot2 (str: string) =
 let random = System.Random()
 
 let randomOfList lst =
-    printfn "Choosing random of: %A" lst
+    // printfn "Choosing random of: %A" lst
     let max = List.length lst
     let rand = random.Next max
     printfn "Chosen %d" rand
@@ -17,7 +17,7 @@ let randomOfList lst =
 
 let randomOfListWithSeed lst seed =
     let random = System.Random(seed)
-    printfn "Choosing random of: %A" lst
+    // printfn "Choosing random of: %A" lst
     let max = List.length lst
     let rand = random.Next max
     printfn "Chosen %d" rand

@@ -10,6 +10,7 @@ type Link =
     | PushLink of UReference
     | JumpLink of UReference
     | PushLocationLink of string
+    | PushPersonLink of string
     | UnknownLink
 
 type IAction =
@@ -113,6 +114,28 @@ type PushLocation =
                 | None -> Some(m)
                 | Some(old) -> Some(m >> old)
             { x with PushLocation.Mod = newMod } :> IAction
+
+type PushPersonDialog =
+    { PersonHubRef: string; Mod: Option<State -> State>; SpecificAction: IAction option }
+    interface IAction with
+        member this.Links() : Link list = [ PushPersonLink(this.PersonHubRef) ]
+
+        member x.Exec state =
+            let newState = 
+                state 
+                |> Option.defaultValue id x.Mod
+                |> pushPerson x.PersonHubRef
+            match x.SpecificAction with
+            | Some(act) ->
+                act.Exec newState
+            | None -> newState
+        
+        member x.ComposeAfter m = 
+            let newMod =
+                match x.Mod with
+                | None -> Some(m)
+                | Some(old) -> Some(m >> old)
+            { x with PushPersonDialog.Mod = newMod } :> IAction
 
 type ChangeLocation =
     { LocationRef: string; Mod: Option<State -> State> }

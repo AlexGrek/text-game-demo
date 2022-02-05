@@ -64,6 +64,8 @@ type Components() =
                     | DialogView (d) -> Components.DialogWindowView(d, state, state.Animation, setState, setGameState)
                     | LocaitionHubView (hub) ->
                         Components.LocationHubView(hub, state, state.Animation, setState, setGameState)
+                    | PersonHubView (hub) ->
+                        Components.PersonHubView(hub, state, state.Animation, setState, setGameState)
 
                 Html.div [ prop.className "main-div"
                            prop.children [ Components.PopupPanel(state, setState)
@@ -192,6 +194,54 @@ type Components() =
                                                         @ renderedLocations
                                               ) ] ] ]
 
+
+    [<ReactComponent>]
+    static member PersonHubView
+        (
+            loc: PersonHubViewModel,
+            s: GlobalState,
+            a: AnimationProgress,
+            setstate: GlobalState -> unit,
+            setUpdatedGameState
+        ) =
+        let animation =
+            match s.Animation with
+            | NoAnimation -> "animate__animated animate__fadeInLeft animate__faster"
+            | VariantChosen (_) -> "animate__animated animate__fadeOutRight"
+
+        let renderVariant (el: DialogVariantView) =
+            match el.IsLocked with
+            | Unlocked -> Some(Components.DialogButton, el)
+            | Reason (_) -> Some(Components.LockedDialogButton, el)
+            | Hidden -> None
+
+        let toSimpleVariants (l: LocationHubVariantView list) = List.map (fun r -> r.Variant) l
+
+        let setgs action actionText =
+            setUpdatedGameState
+            <| executeDialogStateUpdate
+                s.GameState
+                (toString loc.Text)
+                (Some(loc.DisplayName)) // display location name as actor
+                action
+                actionText
+
+        let renderedVariants =
+            List.choose renderVariant loc.Variants
+            |> List.mapi (fun i (render, d) -> render (d, s, a, setstate, setgs, i))
+
+        Html.div [ prop.className "location-hub-window dialog-window"
+                   prop.children [ DialogTextComponents.DialogtextRenderer(
+                                       animation,
+                                       loc.Text,
+                                       s.GameState,
+                                       s.GameState.Iteration
+                                   )
+                                   Html.div [ prop.className "variants"
+                                              prop.children (
+                                                  renderedVariants
+                                                  @ [ Html.div [ prop.innerHtml "This is person" ] ]
+                                              ) ] ] ]
 
     [<ReactComponent>]
     static member DialogWindowView
