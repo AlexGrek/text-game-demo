@@ -113,3 +113,5 @@ let jumpWithDialogStackTo targetRef newStackRefs s =
         DialogMode({ Reference = u })
     let newStack = List.map mapUIStack newStackRefs
     { iterate s with UI = (setUIDialogRef targetRef); UIStack = newStack }
+
+let gameVersion = "0.1.1 alpha"

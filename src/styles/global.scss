@@ -169,6 +169,12 @@ body::-webkit-scrollbar {
     font-family: monospace;
 }
 
+.version-span {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: smaller;
+    margin-left: 2em;
+}
+
 // typing
 .container-typing {
     display: inline-block;

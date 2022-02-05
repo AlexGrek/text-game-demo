@@ -1,4 +1,4 @@
-module Serialication
+module Serialization
 
 open Fable.SimpleJson
 

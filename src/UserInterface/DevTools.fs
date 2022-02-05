@@ -3,9 +3,6 @@ module DevTools
 
 open Feliz
 open Feliz.Router
-
-open Dialog
-open RichText
 open State
 open Fable.SimpleJson
 
@@ -20,11 +17,12 @@ type Components() =
                                                      prop.onClick (fun _ ->
                                                          Json.serialize<State> state |> printfn "%A") ]
                                        Html.button [ prop.text "Save state"
-                                                     prop.onClick (fun _ -> Serialication.saveMainState state) ]
+                                                     prop.onClick (fun _ -> Serialization.saveMainState state) ]
                                        Html.button [ prop.text "Load state"
                                                      prop.onClick (fun _ ->
                                                          printfn "state loaded"
-                                                         setGameState <| Serialication.loadMainState ()) ] ] ]
+                                                         setGameState <| Serialization.loadMainState ()) ]
+                                       Html.span [prop.text ("Version: " + gameVersion ); prop.className "version-span" ] ] ]
         else
             Html.div []
 
