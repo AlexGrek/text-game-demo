@@ -14,6 +14,7 @@
     <Compile Include="Dialog.fs" />
     <Compile Include="HubDesign.fs" />
     <Compile Include="LocationHub.fs" />
+    <Compile Include="PersonHub.fs" />
     <Compile Include="Engine.fs" />
     <Compile Include="RoleModel.fs" />
     <Compile Include="Person.fs" />
@@ -25,6 +26,7 @@
     <Compile Include="Game/GameDvaFacts.fs" />
     <Compile Include="GameDvaCharacters.fs" />
     <Compile Include="Game\GameChapter2.fs" />
+    <Compile Include="Game\GameChapter3.fs" />
     <Compile Include="Game/GameDva.fs" />
     <Compile Include="Serialization.fs" />
     <Compile Include="UserInterface/RichTextRenderer.fs" />

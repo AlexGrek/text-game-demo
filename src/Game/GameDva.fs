@@ -82,7 +82,7 @@ let build () =
 
             var (
                 hidden (chars.World.PoliceCameAlready) "открыть дверь" {
-                    action (pushWindow "police.init")
+                    action (pushWindow "police.initflat")
                 }
             )
 
@@ -508,6 +508,7 @@ let build () =
     |> ignore
 
     GameChapter2.init (facts, chars) |> ignore
+    GameChapter3.init (facts, chars) |> ignore
 
 type GameDvaRunner() =
     interface Engine.IGameRunner with
