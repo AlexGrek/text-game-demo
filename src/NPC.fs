@@ -108,7 +108,7 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
         List.map createFactVariant facts
 
     let variants = (List.map fst generateAvailableFacts)
-    let endDialog = popVariant "закончить разговор"
+    let endDialog = popVariant "назад"
 
     let initialDialog =
         { DialogWindow.Name = "init"
@@ -128,3 +128,6 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
 
 let asTalker(p: Person) =
     (p.Roles().As TALKER_ROLE_ID) :?> Talker
+
+type npcBuilder(person: Person) = 
+    
