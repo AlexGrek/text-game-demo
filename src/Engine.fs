@@ -10,7 +10,7 @@ let lookupCurrentDialogWindow s =
     | DialogMode d -> (d.Reference)
     | s -> failwith (sprintf "Cannot get current dialog window while in %A" s)
     let reference = getFromUi s.UI
-    let dialog = Data.getGlobal<Dialog> REPO_DIALOG reference.D
+    let dialog = getGlobal<Dialog> REPO_DIALOG reference.D
     if (Map.containsKey reference.W >> not) dialog.DialogWindows then
         failwith <| sprintf "Reference error: Window <%s> not found in Dialog <%s>, found: %A"
                             reference.W
@@ -26,13 +26,18 @@ let lookupCurrentLocation s =
     getGlobal<LocationHub.LocationHub> REPO_LOCATIONS reference
     
 
-let executeCurrentDialogWindow s =
+let rec executeCurrentDialogWindow s =
     let dialogWindow = lookupCurrentDialogWindow s
-    match dialogWindow.OnEntry with
-    | None -> s
-    | Some(m) -> m s
+    match dialogWindow with
+    | Proxy(proxy) ->
+        printfn "Executing proxy window %A" proxy.Name 
+        execute (proxy.Action s) s
+    | TextWindow(tw) -> 
+        match tw.OnEntry with
+        | None -> s
+        | Some(m) -> m s
 
-let execute (a: Actions.IAction) (s: State) =
+and execute (a: Actions.IAction) (s: State) =
     try 
         let updatedState = a.Exec s
         match updatedState.UI with

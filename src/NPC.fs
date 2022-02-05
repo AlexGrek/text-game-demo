@@ -4,6 +4,7 @@ open DSL
 open Props
 open Dialog
 open Person
+open State
 
 type BasicAnswers =
     { DontKnow: string list
@@ -91,7 +92,7 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
                 match reaction with
                 | Do (iaction) -> (iaction, None)
                 | Say (text) -> (pushToWindow fid, Some(sWindow talker fid text "понятно"))
-                | Talk (window) -> (pushToWindow window.Name, Some(window))
+                | Talk (window) -> (pushToWindow <| window.GetName(), Some(window))
                 | DontKnow -> windowGo "dontknow" talker.BasicAnswers.DontKnow "понятно"
                 | Shock -> windowGo "shock" talker.BasicAnswers.Shock "ясно"
                 | DontBelieve -> windowGo "dontbelieve" talker.BasicAnswers.DontBelieve "эх"
@@ -111,7 +112,7 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
     let endDialog = popVariant "назад"
 
     let initialDialog =
-        { DialogWindow.Name = "init"
+        { TextDialogWindow.Name = "init"
           Actor = None
           Text =
             (stxt
@@ -120,7 +121,7 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
           OnEntry = None }
 
     let ws =
-        initialDialog
+        TextWindow(initialDialog)
         :: (List.choose snd generateAvailableFacts)
 
     let dialog = createDialog dialogName ws
@@ -129,5 +130,15 @@ let createAskAboutDialog (publicName: string) (talker: Talker) (ans: Map<string,
 let asTalker(p: Person) =
     (p.Roles().As TALKER_ROLE_ID) :?> Talker
 
-type npcBuilder(person: Person) = 
+type NpcBuilderState = {
+    DisplayName: State -> string
+    FactReactions: Map<string, Reaction>
+    ItemGivenReactions: Map<string, Reaction>
+} 
+    with
+        member x.Build person =
+            let talker = asTalker person
+            createAskAboutDialog talker.Name talker x.FactReactions
+
+// type npcBuilder(person: Person) = 
     

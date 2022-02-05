@@ -1,8 +1,6 @@
 module GameDvaCharacters
 
 open Props
-open DSL
-open Dialog
 open NPC
 open Person
 
@@ -35,7 +33,7 @@ type PolicemanJoe() =
 type World(facts: GameDvaFacts.GameDvaFacts) =
     let name = "world"
 
-    member val DeadBodyFoundThisLife = BoolProperty.Personal name "deadFountThisLife" false
+    member val DeadBodyFoundThisLife = BoolProperty.Personal name "deadFoundThisLife" false
 
     member x.CanStartActionInTheFlat s =
         (facts.shkafSeen.IsKnown s

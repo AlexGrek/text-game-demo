@@ -49,12 +49,16 @@ type DialogViewModel =
     { Actor: DialogActorView
       Text: RichText
       Variants: DialogVariantView list }
-    static member OfDialogWindow (s: State) (d: Dialog.DialogWindow) =
+    static member OfDialogWindow (s: State) (dwindow: Dialog.DialogWindow) =
+      match dwindow with
+      | Dialog.TextWindow(d) ->
         { Actor = makeActor(d.Actor)
           Text = d.Text s
           Variants =
             List.map (DialogVariantView.OfDialogVariant s) (d.Variants s)
             |> filterOutVariants id }
+      | Dialog.Proxy(_) ->
+          failwith "should never render proxy windows"
 
 type LocationHubViewModel =
     { Text: RichText

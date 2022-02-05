@@ -56,12 +56,25 @@ let pushWindowRef target = { TargetRef = target; Mod = None }
 
 // the dialog itself
 
-type DialogWindow =
+type TextDialogWindow =
     { Name: string
       Actor: string option
       Text: State -> RichText
       Variants: State -> DialogVariant list
       OnEntry: Option<State -> State> }
+
+type ProxyWindow = {
+    Name: string
+    Action: State -> IAction
+}
+
+type DialogWindow = 
+    | Proxy of ProxyWindow
+    | TextWindow of TextDialogWindow
+    member x.GetName() = 
+        match x with
+        | Proxy(p) -> p.Name
+        | TextWindow(w) -> w.Name
 
 type Dialog =
     { Name: string

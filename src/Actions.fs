@@ -10,6 +10,7 @@ type Link =
     | PushLink of UReference
     | JumpLink of UReference
     | PushLocationLink of string
+    | UnknownLink
 
 type IAction =
     abstract member Exec : State -> State

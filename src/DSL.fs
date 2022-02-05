@@ -38,7 +38,7 @@ type WindowBuilder(name: string) =
     member __.Yield(_) : StaticWindowGenerator =
         staticDialogWindow name None (stxt "") [] None
 
-    member __.Run(dialog: StaticWindowGenerator) : DialogWindow = dialog.Build()
+    member __.Run(dialog: StaticWindowGenerator) : DialogWindow = TextWindow(dialog.Build())
 
     [<CustomOperation("stxt")>]
     member __.Stxt(dialog: StaticWindowGenerator, text: string) : StaticWindowGenerator =
@@ -153,7 +153,7 @@ let hidden predicate text =
     VariantBuilder(text, makeHiddenVariant predicate)
 
 let makeDialogWindowsFromList (lst: DialogWindow list) =
-    List.map (fun (d: DialogWindow) -> (d.Name, d)) lst
+    List.map (fun (d: DialogWindow) -> (d.GetName(), d)) lst
     |> Map.ofList
 
 let saveDialog (dialog: Dialog) =
