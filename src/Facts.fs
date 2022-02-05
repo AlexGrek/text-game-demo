@@ -47,7 +47,7 @@ type PersonFact =
     }
     member x.IsKnown (state: State) =
         state.KnownPersons.ContainsKey x.PersonName && 
-            state.KnownPersons.[x.PersonName].Contains x.Name
+            state.KnownPersons.[x.PersonName].Contains x.FactId
     member x.Acquire state =
         printfn "Accuired personal fact: %A %s" x.FactId x.Description
         let newState = Person.meetPersonName x.PersonName state

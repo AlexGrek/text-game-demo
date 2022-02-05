@@ -46,8 +46,10 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             DontBelieve
         name (fun s ->
             if (chars.PolicemanJoe.UserKnowsHisName.IsKnown s) then
+                printfn "FUCK! I know dat fact" 
                 "Полицейський Джо"
             else 
+                printfn "HOOOOOLY FUCK! I don't know dat fact" 
                 "Полицейський" )
     } |> ignore
 

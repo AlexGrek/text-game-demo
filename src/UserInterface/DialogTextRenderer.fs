@@ -16,7 +16,7 @@ type DialogTextComponents() =
     [<ReactComponent>]
     static member AuthorPresentRenderer(actor, id) =
         Html.div [ prop.className "author-container"
-                   prop.children [ Html.div [ prop.className "inner-author-container"
+                   prop.children [ Html.div [ prop.className "inner-author-container animate__bounceInLeft animate__faster animate__animated"
                                               prop.children [ Html.div [ prop.className "author-icon"
                                                                          prop.children [ Html.img [ prop.alt
                                                                                                         "author icon"
