@@ -203,7 +203,7 @@ body::-webkit-scrollbar {
 }
 
 .popup-panel {
-    position: fixed;
+    // position: fixed;
     min-height: 20%;
     max-height: 90%;
     overflow-y: auto;
@@ -213,6 +213,33 @@ body::-webkit-scrollbar {
     background:rgba(228, 212, 190, 0.917);
     box-shadow: 0 0 50em black;
     width: 100%;
+}
+
+.popup-panel-holder {
+    height: 100%;
+    width: 100%;
+    z-index: 900;
+    position: fixed;
+}
+
+.popup-panel-close-button {
+    opacity: 0.2;
+    background-color: #444b43;
+    background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.0) 100%);
+    border: none;
+    // position: fixed;
+    // bottom: 0;
+    padding: 10%;
+    height: 10%;
+    cursor: pointer;
+    width: 100%;
+    display: block;
+    z-index: 1000;
+    transition: opacity .6s;
+}
+
+.popup-panel-close-button:hover {
+    opacity: .9;
 }
 
 .panel-header {

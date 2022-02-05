@@ -14,11 +14,6 @@ let chooseStyleBasedOn cond baseStyle onTrue onFalse =
     else
         baseStyle + " " + onFalse
 
-type PanelButtonModel =
-    {
-        text: string; icon: string; key: int; onClick: unit -> unit
-    }
-
 type PanelUtils() =
     [<ReactComponent>]
     static member PanelHeader(header: string, onClose) =

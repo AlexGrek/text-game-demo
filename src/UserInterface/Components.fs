@@ -113,8 +113,10 @@ type Components() =
 
         let anyPanelStyle = openClosedStyle (s.Panel <> NoPanel)
 
+        let close = fun _ -> ss { s with Panel = NoPanel }
+
         let renderSpecificPanel name renderer =
-            [ UiUtils.PanelUtils.PanelHeader(header = name, onClose = fun _ -> ss { s with Panel = NoPanel })
+            [ UiUtils.PanelUtils.PanelHeader(header = name, onClose = close)
               renderer ]
 
         let genChildren =
@@ -130,9 +132,17 @@ type Components() =
                 renderSpecificPanel "Дебаггер"
                 <| DebuggerRenderer.DebuggerPanelRenderer.DebuggerPanel(s.GameState)
 
-
-        Html.div [ prop.className ("popup-panel " + anyPanelStyle)
-                   prop.children genChildren ]
+        Html.div [ 
+            prop.className ("popup-panel-holder " + anyPanelStyle)
+            prop.children [
+                Html.div [ prop.className "popup-panel"
+                           prop.children 
+                            genChildren ]
+                Html.button [
+                                    prop.className ("popup-panel-close-button")
+                                    prop.text "закрыть"
+                                    prop.onClick close
+                                ] ] ]
 
 
     [<ReactComponent>]
