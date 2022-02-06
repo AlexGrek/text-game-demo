@@ -114,10 +114,11 @@ let jumpWithDialogStackTo targetRef newStackRefs s =
     let newStack = List.map mapUIStack newStackRefs
     { iterate s with UI = (setUIDialogRef targetRef); UIStack = newStack }
 
-let gameVersion = "0.1.3 alpha"
-
 let ands cond1 cond2 state =
     (cond1 state) && (cond2 state)
 
 let ors cond1 cond2 state =
     (cond1 state) || (cond2 state)
+
+    
+let gameVersion = "0.1.4 alpha"

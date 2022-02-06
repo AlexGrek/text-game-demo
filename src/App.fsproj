@@ -5,8 +5,8 @@
   <ItemGroup>
     <None Include="index.html" />
     <Compile Include="Utils.fs" />
-    <Compile Include="Extensions.fs" />
     <Compile Include="Data.fs" />
+    <Compile Include="Extensions.fs" />
     <Compile Include="State.fs" />
     <Compile Include="RichText.fs" />
     <Compile Include="Props.fs" />
