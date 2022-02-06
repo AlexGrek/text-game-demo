@@ -189,7 +189,7 @@ let doPushWindow target =
     let reference = UReference.Parse target
     (pushWindowRef reference) :> IAction
 
-let doPopPushWindow target =
+let doPopPush target =
     let reference = UReference.Parse target
     (popPushWindowRef reference) :> IAction
 

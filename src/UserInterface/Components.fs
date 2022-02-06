@@ -98,7 +98,7 @@ type Components() =
                                    )
                                    UiUtils.PanelUtils.PanelButton(
                                        text = "Дебаггер",
-                                       icon = "img/free-icon-comment-alt.png",
+                                       icon = "img/debug.png",
                                        key = 999999990,
                                        onClick = (fun _ -> ss { s with Panel = DebugPanel })
                                    ) ] ]

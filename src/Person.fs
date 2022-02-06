@@ -7,7 +7,7 @@ open State
 type Person(name: string, dispalyName: string) =
     abstract member Roles: unit -> RoleModel
     abstract member DisplayName: State -> string
-    default _.DisplayName (s: State) = name + "_UNNAMED"
+    default _.DisplayName (state: State) = dispalyName
     default _.Roles() = RoleModel([])
     member val Name = name
     member val DefaultDisplayName = dispalyName

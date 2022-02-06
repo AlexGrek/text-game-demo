@@ -42,3 +42,6 @@ type GameDvaFacts() =
 
     member val strangerKillsMe =
         createFact "strangerKillsMe" "Странный тип на верхнем этаже" "Я слышала выстрелы, и сама стала жертвой странного типа в капюшоне."
+
+    member val policeKillsMe =
+        createFact "policeKills" "Полицейський беспредел" "Похоже, полиция здесь стреляет в безоружных людей. Да уж, ну и времена пошли. И сразу в голову."

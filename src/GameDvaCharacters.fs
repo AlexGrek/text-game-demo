@@ -43,6 +43,21 @@ type PolicemanJoe() =
             "И он ничего не знает о личности того самого агента, что можно использовать"
     member val ThinksIAmCooper = 
         BoolProperty.Personal n "thinksIAmCooper" false
+    member val ThoughtIWasCooper = 
+        BoolProperty.Personal n "thoughtIWasCooper" false
+    member val FalledWhenIKickedHim = 
+        BoolProperty.Personal n "falledWhenIKickedHim" false
+    member val ToldMeSecrets = 
+        BoolProperty.Personal n "toldMeSecrets" false
+
+type Babka() =
+    inherit Person("babka", "Какая-то старая бабка")
+    let n = "joe"
+    override x.Roles() = 
+        RoleModel.RoleModel([
+            InLocation(x.Name, "камера")
+            Talker(x.Name, DefaultBasicAnswers, DontCare)
+        ])
 
 type World(facts: GameDvaFacts.GameDvaFacts) =
     let name = "world"
@@ -50,8 +65,7 @@ type World(facts: GameDvaFacts.GameDvaFacts) =
     member val DeadBodyFoundThisLife = BoolProperty.Personal name "deadFoundThisLife" false
 
     member x.CanStartActionInTheFlat s =
-        (facts.shkafSeen.IsKnown s
-         && x.DeadBodyFoundThisLife.Get s
+        (x.DeadBodyFoundThisLife.Get s
          && facts.version.IsKnown s)
 
     member val PoliceArriving = BoolProperty.Personal name "policeArriving" false
@@ -75,6 +89,7 @@ type Characters(facts: GameDvaFacts.GameDvaFacts) =
     let myself = Myself()
     member val Myself = saved myself
     member val PolicemanJoe = saved <| PolicemanJoe()
+    member val Babka = saved <| Babka()
     member val World = World(facts)
 
     member x.DeathReset(s: State.State) =
