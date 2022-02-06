@@ -8,6 +8,7 @@ type DialogTextComponents() =
     static let getIconForAuthor author =
         match author with
         | "joe" -> "img/police-badge.png"
+        | "babka" -> "img/wheelchair.png"
         | _ -> "img/rhombus.png"
 
     [<ReactComponent>]

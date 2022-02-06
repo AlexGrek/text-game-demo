@@ -396,5 +396,15 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
     } |> ignore
 
     npc chars.Babka {
-        
-    }
+        allow PersonHub.AllowedInteractions.Nothing
+        stxt "Бабка не выглядит дружелюбной. Она похожа на старую циганку, которая может оставить тебя без денег на вокзале."
+        var ("подойти" --- "бабка.идиты")
+    } |> ignore
+
+    createDialog "бабка" [
+        window "идиты" {
+            actor chars.Babka.Name
+            stxt "Иди ты отсюдова"
+            var (popVariant "отойти")
+        }
+    ] |> ignore
