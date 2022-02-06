@@ -12,7 +12,7 @@ type RichTextComponents() =
                                     prop.className "highlighted-as-value"
                                     prop.text s
                                 ]
-        | Bold(s) -> Html.span [
+        | Bold(s) -> Html.mark [
                         prop.className "bold-text"
                         prop.text s
                     ]

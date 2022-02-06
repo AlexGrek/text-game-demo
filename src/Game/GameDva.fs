@@ -2,6 +2,7 @@ module GameDva
 
 open State
 open DSL
+open NPC
 open Actions
 
 let INITIAL_STATE =
@@ -70,11 +71,16 @@ let build () =
                 (chars.World.PoliceCameAlready >> not)
                 """Ты находишься в центре огромной комнаты, которая оформлена в современном стиле. Белые стены, белый потолок,
         большая белая двуспальная кровать... Комната залита ярким светом из панорамных окон. Из комнаты открыта дверь в прихожую."""
-                """О боже! Кто-то неистово стучит в дверь и требует ее открыть. Похоже, придется подчиниться требованию, иначе они просто 
+                """*!О боже! Кто-то неистово стучит в дверь и требует ее открыть.!* Похоже, придется подчиниться требованию, иначе они просто 
                 вынесут дверь."""
 
             var (
-                hidden (chars.World.PoliceCameAlready) "открыть дверь" {
+                hidden (ands chars.World.PoliceCameAlready (chars.World.talkedToPolice.Get >> not)) "открыть дверь" {
+                    action (doPushWindow "police.initflat")
+                }
+            )
+            var (
+                hidden (chars.World.talkedToPolice.Get) "к полицейським" {
                     action (doPushWindow "police.initflat")
                 }
             )

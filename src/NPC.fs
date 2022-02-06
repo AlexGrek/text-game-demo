@@ -165,7 +165,7 @@ type NpcBuilderState =
             (fun s ->
                 x.Variants s
                 @ x.StaticVariants
-                  @ (List.singleton (popVariant "уйти"))) }
+                  @ (List.singleton (popVariant "закончить разговор"))) }
         |> Data.save<PersonHub> REPO_PERSON_HUBS x.SystemName
 
 

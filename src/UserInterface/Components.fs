@@ -297,7 +297,7 @@ type Components() =
     [<ReactComponent>]
     static member DialogButton(prp: DialogVariantView, (s: GlobalState), a, setter, onClickAction, i) =
         let withAnimation () =
-            setTimeout (fun _ -> onClickAction prp.Action prp.Text |> ignore) 500
+            setTimeout (fun _ -> onClickAction prp.Action prp.Text |> ignore) 250
             |> ignore // no way to stop timeout
 
             setter { s with Animation = VariantChosen(i) }
@@ -311,10 +311,10 @@ type Components() =
         let addClassesByAnimation =
             function
             | NoAnimation ->
-                "animate__animated animate__backInUp animate__faster "
+                "animate__animated animate__fadeInDown animate__faster "
                 + calcDelay i
-            | VariantChosen (x) when x = i -> "animate__animated animate__zoomOutDown"
-            | VariantChosen (_) -> "animate__animated animate__fadeOut"
+            | VariantChosen (x) when x = i -> "animate__animated animate__zoomOutDown animate__faster"
+            | VariantChosen (_) -> "animate__animated animate__fadeOut animate__faster"
 
         let addClassesByAction =
             match prp.Action with
@@ -350,10 +350,10 @@ type Components() =
         let addClassesByAnimation =
             function
             | NoAnimation ->
-                "animate__animated animate__backInUp animate__faster "
+                "animate__animated animate__fadeInDown animate__faster "
                 + calcDelay i
             | VariantChosen (x) when x = i -> "animate__animated animate__zoomOutDown"
-            | VariantChosen (_) -> "animate__animated animate__fadeOut"
+            | VariantChosen (_) -> "animate__animated animate__fadeOut animate__faster"
 
         Html.button [ prop.text prp.Text
                       prop.key s.GameState.Iteration

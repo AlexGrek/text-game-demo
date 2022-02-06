@@ -66,7 +66,29 @@ body {
     font-weight: bold;
     font-weight: normal;
     font-style: normal;
+    padding: 3pt;
+    animation-duration: 0.8s;
+    border-radius: 4px;
+    animation-name: bold-text-flashing;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
 }
+
+.bold-text:hover {
+    background-color: red;
+    animation: none;
+    color: white;
+}
+
+@keyframes bold-text-flashing {
+    from {
+      background-color: rgba(231, 158, 98, 0.9);
+    }
+  
+    to {
+        background-color: rgba(252, 213, 41, 0.9);
+    }
+  }
 
 body {
     margin: 0;

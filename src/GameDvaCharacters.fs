@@ -71,6 +71,8 @@ type World(facts: GameDvaFacts.GameDvaFacts) =
     member val PoliceArriving = BoolProperty.Personal name "policeArriving" false
     member val PoliceComingCounter = IterationCounter.Personal name "policeComingCounter"
 
+    member val talkedToPolice = BoolProperty.Personal name "talkedToPolice" false
+
 
     member x.PoliceArrive s =
         x.PoliceArriving.Set true s
