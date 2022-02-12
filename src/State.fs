@@ -21,9 +21,19 @@ type InteractionHistoryRecord =
 type ErrorInfo = {
     Message: string
 }
+
+type UIAnimation = 
+    | NoAnimation
+    | Success
+    | Failure
+    | Warning
+    | Shock
+    | Custom of string
+
 type State =
     { UI: UiState
       UIStack: UiState list
+      Animation: UIAnimation
       Previous: State option
       InteractionHistory: InteractionHistoryRecord list
       Log: string list
@@ -36,6 +46,7 @@ type State =
 let makeInitialStateInDialog (r: UReference) =
     { UI = DialogMode({ Reference = r })
       UIStack = []
+      Animation = NoAnimation
       Previous = None
       InteractionHistory = []
       Log = []
@@ -62,7 +73,8 @@ let private setUIDialog d w =
 let private setUIDialogRef dw =
     DialogMode({ Reference = dw })
 
-let private iterate s = { s with Iteration = s.Iteration + 1}
+let private iterate s = 
+    { s with Iteration = s.Iteration + 1; Animation = NoAnimation}
 
 let gotoDialogWindow refs s =
     { iterate s with UI = changeUIDialogWindow refs s.UI }
