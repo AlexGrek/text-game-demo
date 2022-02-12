@@ -146,6 +146,7 @@ type NpcBuilderState =
       Variants: State -> DialogVariant list
       StaticVariants: DialogVariant list
       ItemGivenReactions: Map<string, Reaction>
+      StartingDialog: State -> Actions.Jump option
       Allowed: State -> AllowedInteractions
       Description: State -> RichText.RichText }
     member x.Build person =
@@ -160,6 +161,8 @@ type NpcBuilderState =
           Description = x.Description
           Design = HubDesign.defaultDesign
           FactsDialogLink = askAbout
+          StartingDialog = 
+            x.StartingDialog
           Allowed = x.Allowed
           Variants =
             (fun s ->
@@ -182,6 +185,7 @@ type npcBuilder(person: Person) =
           Allowed = s AllowedInteractions.All
           Variants = s []
           StaticVariants = []
+          StartingDialog = s None
           Description = stxt name }
 
     [<CustomOperation("name")>]

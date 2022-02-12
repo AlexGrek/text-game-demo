@@ -52,7 +52,7 @@ let getGlobal<'a> (repo: GlobalRepository<'a>) key =
         repo.Get key
     else
         failwith
-        <| sprintf "Missing global key %A\n Dump keys: %A" key (dumpGlobalKeys<'a> repo)
+        <| sprintf "Missing global key <<%A>>\n Dump keys: %A" key (dumpGlobalKeys<'a> repo)
 
 let resetGlobal<'a> (repo: GlobalRepository<'a>) = repo.Reset ()
 
