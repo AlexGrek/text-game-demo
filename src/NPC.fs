@@ -145,6 +145,7 @@ type NpcBuilderState =
       Variants: State -> DialogVariant list
       StaticVariants: DialogVariant list
       ItemGivenReactions: Map<string, Reaction>
+      StartingDialog: State -> Actions.Jump option
       Description: State -> RichText.RichText }
     member x.Build person =
         let talker = asTalker person
@@ -158,6 +159,8 @@ type NpcBuilderState =
           Description = x.Description
           Design = HubDesign.defaultDesign
           FactsDialogLink = askAbout
+          StartingDialog = 
+            x.StartingDialog
           Variants =
             (fun s ->
                 x.Variants s
@@ -178,6 +181,7 @@ type npcBuilder(person: Person) =
           ItemGivenReactions = Map.empty
           Variants = s []
           StaticVariants = []
+          StartingDialog = s None
           Description = stxt name }
 
     [<CustomOperation("name")>]

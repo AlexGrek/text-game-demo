@@ -12,6 +12,7 @@ type PersonHubVariant = {
 }
 
 type PersonHub = {
+    StartingDialog: State -> Actions.Jump option
     Variants: State -> DialogVariant list
     Description: State -> RichText
     Name: string
