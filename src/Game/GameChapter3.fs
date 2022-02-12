@@ -6,7 +6,7 @@ open State
 open Actions
 
 let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) =
-    let talkedToPolice = Props.BoolProperty("talkedToPolice", false)
+    let talkedToPolice = chars.World.talkedToPolice
     createDialog "police" [
         proxyWindow 
             "initflat"
@@ -195,7 +195,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             "proxy"
             (fun (s: State) -> 
                 if (talkedToPolice.Get s |> not) then
-                    doGoToWindow "init"
+                    (doGoToWindow "init").ComposeAfter(facts.policeIsComing.Acquire)
                 else 
                     if (chars.PolicemanJoe.ThinksIAmCooper.Get s) then 
                         doPushWindow "agent.init"
@@ -396,5 +396,15 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
     } |> ignore
 
     npc chars.Babka {
-        
-    }
+        allow PersonHub.AllowedInteractions.Nothing
+        stxt "Бабка не выглядит дружелюбной. Она похожа на старую циганку, которая может оставить тебя без денег на вокзале."
+        var ("подойти" --- "бабка.идиты")
+    } |> ignore
+
+    createDialog "бабка" [
+        window "идиты" {
+            actor chars.Babka.Name
+            stxt "Иди ты отсюдова"
+            var (popVariant "отойти")
+        }
+    ] |> ignore

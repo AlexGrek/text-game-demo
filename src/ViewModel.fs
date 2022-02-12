@@ -83,7 +83,7 @@ type LocationHubViewModel =
     static member OfLocationHub (s: State) (d: LocationHub) =
       {
         Text = d.Description s
-        DisplayName = d.Name //TODO: change this to actual display name
+        DisplayName = d.Name
         Design = d.Design
         Variants = 
           List.map (DialogVariantView.OfDialogVariant s) (d.Variants s)
@@ -95,6 +95,13 @@ type LocationHubViewModel =
           List.map (LocationHubVariantView.OfLocationHubVariant s) (d.Persons s)
           |> filterOutVariants (fun (a: LocationHubVariantView) -> a.Variant)
       }
+
+let createAskAboutButton s d =
+  let allowances = d.Allowed s
+  if (allowances.AllowedTalkAbout) then
+    (List.singleton <| DialogVariantView.MakeUnlockedVariant "спросить о..." (DSL.doPushWindow d.FactsDialogLink))
+  else
+    []
 
 type PersonHubViewModel =
     { Text: RichText
@@ -108,7 +115,7 @@ type PersonHubViewModel =
         Design = d.Design
         Variants =
           ((List.map (DialogVariantView.OfDialogVariant s) (d.Variants s))
-          @ (List.singleton <| DialogVariantView.MakeUnlockedVariant "спросить о..." (DSL.doPushWindow d.FactsDialogLink)))
+          @ createAskAboutButton s d)
           |> filterOutVariants id
       }
 

@@ -6,6 +6,20 @@ open State
 open Dialog
 open HubDesign
 
+
+type AllowedInteractions = 
+    {
+        AllowedTalkAbout: bool
+        AllowedGive: bool
+    }
+    with 
+        static member All = 
+            {AllowedTalkAbout = true; AllowedGive = true} 
+        static member Nothing =
+            {AllowedTalkAbout = false; AllowedGive = false}
+        static member OnlyTalk =
+            {AllowedInteractions.Nothing with AllowedTalkAbout = true} 
+
 type PersonHubVariant = {
     Pic: string option
     Variant: DialogVariant
@@ -17,6 +31,7 @@ type PersonHub = {
     Description: State -> RichText
     Name: string
     FactsDialogLink: string
+    Allowed: State -> AllowedInteractions
     Design: HubDesign
 }
 

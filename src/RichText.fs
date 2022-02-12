@@ -9,21 +9,30 @@ type RichTextElement =
 
 type RichText = RichTextElement list
 
+let removeBraces (sWithBraces: string) =
+    sWithBraces.Substring(1, sWithBraces.Length - 2) // remove braces
+
 // replace *(var)* with variable values
+// replace *! !* with highlighted text
 let parse (txt: string) (state: State.State) =
     let replaceVar (sWithBraces: string) =
-        let s = sWithBraces.Substring(1, sWithBraces.Length - 2) // remove braces
+        let s = removeBraces sWithBraces
         if (Map.containsKey s state.Data) then
             HighlightedAsValue((state.Data.Item s).ToString())
         else
             Bold(s)
     let isVar (s: string) =
         s.StartsWith "(" && s.EndsWith ")"
+    let isHighlighted (s: string) =
+        s.StartsWith "!" && s.EndsWith "!" && s.Length > 2
     let mapper (el: string) =
         if (isVar el) then
             replaceVar el
         else
-            Text(el)
+            if (isHighlighted el) then
+                Bold(removeBraces el)
+            else
+                Text(el)
     
     let uniteTextNodes acc el =
         match el with 

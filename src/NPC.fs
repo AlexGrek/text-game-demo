@@ -7,6 +7,7 @@ open Person
 open State
 open PersonHub
 open Actions
+open LocationHub
 
 type BasicAnswers =
     { DontKnow: string list
@@ -146,6 +147,7 @@ type NpcBuilderState =
       StaticVariants: DialogVariant list
       ItemGivenReactions: Map<string, Reaction>
       StartingDialog: State -> Actions.Jump option
+      Allowed: State -> AllowedInteractions
       Description: State -> RichText.RichText }
     member x.Build person =
         let talker = asTalker person
@@ -161,11 +163,12 @@ type NpcBuilderState =
           FactsDialogLink = askAbout
           StartingDialog = 
             x.StartingDialog
+          Allowed = x.Allowed
           Variants =
             (fun s ->
                 x.Variants s
                 @ x.StaticVariants
-                  @ (List.singleton (popVariant "уйти"))) }
+                  @ (List.singleton (popVariant "закончить разговор"))) }
         |> Data.save<PersonHub> REPO_PERSON_HUBS x.SystemName
 
 
@@ -179,6 +182,7 @@ type npcBuilder(person: Person) =
           DisplayName = s person.DefaultDisplayName
           FactReactions = Map.empty
           ItemGivenReactions = Map.empty
+          Allowed = s AllowedInteractions.All
           Variants = s []
           StaticVariants = []
           StartingDialog = s None
@@ -219,6 +223,14 @@ type npcBuilder(person: Person) =
     [<CustomOperation("variants")>]
     member __.Vars(loc: NpcBuilderState, variants: State -> DialogVariant list) = { loc with Variants = variants }
 
+    [<CustomOperation("allow")>]
+    member __.Allow(loc: NpcBuilderState, a: State -> AllowedInteractions) = 
+        { loc with Allowed = a }
+
+    [<CustomOperation("allow")>]
+    member __.Allow(loc: NpcBuilderState, a: AllowedInteractions) = 
+        { loc with Allowed = s a }
+
     member __.Run(loc: NpcBuilderState) =
         printfn "initializing NPC %s" loc.SystemName
         loc.Build person
@@ -248,3 +260,120 @@ let findDisplayName name (s: State) =
         Some(Data.getGlobal<Person> REPO_PERSONS name, s |> Data.getGlobal<State -> string> REPO_DISPLAY_NAMES_MAPPING name)
     else
         None
+
+// LOCATION creation is also part of NPC engine
+
+let getPeopleOnLocation name (state: State) =
+    let createForPerson (p: Person) =
+        let name = 
+            match (findDisplayName p.Name state) with
+            | Some(_, name) -> name
+            | None -> p.DisplayName state
+        { Pic = None
+          Variant =
+            makeUnlockedVariant
+                name
+                (doPushNpcDialog p.Name) }
+
+    let inLocation (l: InLocation) = (l.CurrentLocation.Get state) = name
+
+    let checkPerson (p: Person) =
+        match (asInLocation p) with
+        | Some (loc) -> inLocation loc
+        | None -> false
+
+    Data.values REPO_PERSONS
+    |> Seq.filter checkPerson
+    |> Seq.toList
+    |> List.map createForPerson
+
+type LocationHubStaticVariants =
+    { LocationHub: LocationHub
+      Variants: DialogVariant list
+      StaticPersons: LocationHubVariant list }
+    member x.Build() =
+        { x.LocationHub with
+            Variants = s (List.rev x.Variants)
+            // include both static persons and dynamic persons
+            Persons =
+                fun state ->
+                    (List.rev x.StaticPersons)
+                    @ (x.LocationHub.Persons state) }
+
+
+type LocationHubBuilder(name: string) =
+    let initialLocation =
+        { Locations = []
+          Design = HubDesign.defaultDesign
+          Persons = getPeopleOnLocation name
+          Variants = s []
+          Description = stxt ""
+          Name = name }
+
+    member __.Yield(_) : LocationHubStaticVariants =
+        { LocationHub = initialLocation
+          Variants = []
+          StaticPersons = [] }
+
+    member __.Run(a: LocationHubStaticVariants) : LocationHub = a.Build() |> Data.save REPO_LOCATIONS name
+
+    [<CustomOperation("locVariant")>]
+    member __.LocVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
+        { loc with
+            LocationHub =
+                { loc.LocationHub with
+                    Locations =
+                        List.rev (
+                            (makePicturelessLocationVariant variant)
+                            :: loc.LocationHub.Locations
+                        ) } }
+
+    [<CustomOperation("design")>]
+    member __.Des(loc: LocationHubStaticVariants, design: HubDesign.HubDesign) : LocationHubStaticVariants =
+        { loc with LocationHub = { loc.LocationHub with Design = design } }
+
+
+    [<CustomOperation("locTarget")>]
+    member __.LocVar(loc: LocationHubStaticVariants, toName: string, target: string) : LocationHubStaticVariants =
+        let variant = variant toName { pushLoc target }
+
+        { loc with
+            LocationHub =
+                { loc.LocationHub with
+                    Locations =
+                        List.rev (
+                            (makePicturelessLocationVariant variant)
+                            :: loc.LocationHub.Locations
+                        ) } }
+
+    [<CustomOperation("personVariant")>]
+    member __.PersVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
+        { loc with
+            StaticPersons =
+                (makePicturelessLocationVariant variant)
+                :: loc.StaticPersons }
+
+
+    [<CustomOperation("stxt")>]
+    member __.Stxt(loc: LocationHubStaticVariants, text: string) : LocationHubStaticVariants =
+        { loc with LocationHub = { loc.LocationHub with Description = stxt text } }
+
+    [<CustomOperation("ptxt")>]
+    member __.Ptxt(loc: LocationHubStaticVariants, text: string) : LocationHubStaticVariants =
+        { loc with LocationHub = { loc.LocationHub with Description = ptxt text } }
+
+    [<CustomOperation("ctxt")>]
+    member __.Ctxt
+        (
+            loc: LocationHubStaticVariants,
+            predicate: State -> bool,
+            text1: string,
+            text2: string
+        ) : LocationHubStaticVariants =
+        { loc with LocationHub = { loc.LocationHub with Description = ctxt predicate text1 text2 } }
+
+    [<CustomOperation("var")>]
+    member __.Var(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
+        { loc with Variants = variant :: loc.Variants }
+
+let location name = LocationHubBuilder name
