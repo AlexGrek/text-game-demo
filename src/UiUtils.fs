@@ -14,6 +14,12 @@ let chooseStyleBasedOn cond baseStyle onTrue onFalse =
     else
         baseStyle + " " + onFalse
 
+let lookupIcon iconName asDefault =
+        match iconName with
+        | "dialog-exit-icon" -> "img/comment-check.png"
+        | "dialog-default-icon" -> "img/omment-info.png"
+        | _ -> asDefault
+
 type PanelUtils() =
     [<ReactComponent>]
     static member PanelHeader(header: string, onClose) =

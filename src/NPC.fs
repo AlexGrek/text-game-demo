@@ -137,7 +137,8 @@ let asTalker (p: Person) =
 let REPO_DISPLAY_NAMES_MAPPING = Data.GlobalRepository<State -> string>()
 
 let saveDisplayNameMapping personID mapping =
-    Data.save<State -> string> REPO_DISPLAY_NAMES_MAPPING personID mapping |> ignore
+    Data.save<State -> string> REPO_DISPLAY_NAMES_MAPPING personID mapping
+    |> ignore
 
 type NpcBuilderState =
     { SystemName: string
@@ -148,27 +149,24 @@ type NpcBuilderState =
       ItemGivenReactions: Map<string, Reaction>
       StartingDialog: State -> Actions.Jump option
       Allowed: State -> AllowedInteractions
+      ExitVariant: DialogVariant;
       Description: State -> RichText.RichText }
     member x.Build person =
         let talker = asTalker person
 
         let askAbout =
             createAskAboutDialog x.SystemName talker x.FactReactions
-        
+
         saveDisplayNameMapping x.SystemName x.DisplayName
 
         { Name = x.SystemName
           Description = x.Description
           Design = HubDesign.defaultDesign
           FactsDialogLink = askAbout
-          StartingDialog = 
-            x.StartingDialog
+          StartingDialog = x.StartingDialog
           Allowed = x.Allowed
-          Variants =
-            (fun s ->
-                x.Variants s
-                @ x.StaticVariants
-                  @ (List.singleton (popVariant "закончить разговор"))) }
+          ExitVariant = x.ExitVariant
+          Variants = (fun s -> x.Variants s @ x.StaticVariants) }
         |> Data.save<PersonHub> REPO_PERSON_HUBS x.SystemName
 
 
@@ -186,10 +184,17 @@ type npcBuilder(person: Person) =
           Variants = s []
           StaticVariants = []
           StartingDialog = s None
+          ExitVariant = (popVariant "закончить разговор")
           Description = stxt name }
 
     [<CustomOperation("name")>]
     member __.Name(nbs: NpcBuilderState, name: State -> string) = { nbs with DisplayName = name }
+
+    [<CustomOperation("exittext")>]
+    member __.exitVariantName(nbs: NpcBuilderState, name: string) = { nbs with ExitVariant = (popVariant name) }
+
+    [<CustomOperation("exit")>]
+    member __.exitVariant(nbs: NpcBuilderState, ex: DialogVariant) = { nbs with ExitVariant = ex }
 
     [<CustomOperation("staticname")>]
     member __.Name(nbs: NpcBuilderState, name: string) = { nbs with DisplayName = s name }
@@ -224,27 +229,29 @@ type npcBuilder(person: Person) =
     member __.Vars(loc: NpcBuilderState, variants: State -> DialogVariant list) = { loc with Variants = variants }
 
     [<CustomOperation("allow")>]
-    member __.Allow(loc: NpcBuilderState, a: State -> AllowedInteractions) = 
-        { loc with Allowed = a }
+    member __.Allow(loc: NpcBuilderState, a: State -> AllowedInteractions) = { loc with Allowed = a }
 
     [<CustomOperation("allow")>]
-    member __.Allow(loc: NpcBuilderState, a: AllowedInteractions) = 
-        { loc with Allowed = s a }
+    member __.Allow(loc: NpcBuilderState, a: AllowedInteractions) = { loc with Allowed = s a }
 
     [<CustomOperation("start")>]
-    member __.Strt(loc: NpcBuilderState, d: State -> Actions.Jump option) = 
-        { loc with StartingDialog = d }
+    member __.Strt(loc: NpcBuilderState, d: State -> Actions.Jump option) = { loc with StartingDialog = d }
 
     [<CustomOperation("startonce")>]
-    member __.StrtOnce(loc: NpcBuilderState, targetLink: string) = 
+    member __.StrtOnce(loc: NpcBuilderState, targetLink: string) =
         let reference = Data.UReference.Parse targetLink
-        let jump = {Actions.Jump.TargetRef = reference; Mod = Some(meetPerson person)}
-        { loc with StartingDialog = 
-                            (fun s -> 
-                                if (doesKnowPerson person s) then
-                                    None
-                                else
-                                    Some(jump)) }
+
+        let jump =
+            { Actions.Jump.TargetRef = reference
+              Mod = Some(meetPerson person) }
+
+        { loc with
+            StartingDialog =
+                (fun s ->
+                    if (doesKnowPerson person s) then
+                        None
+                    else
+                        Some(jump)) }
 
     member __.Run(loc: NpcBuilderState) =
         printfn "initializing NPC %s" loc.SystemName
@@ -253,13 +260,22 @@ type npcBuilder(person: Person) =
 let npc person = npcBuilder person
 
 let doPushNpcDialog target =
-    { PersonHubRef = target; PushPersonDialog.Mod = None; SpecificAction = None } :> IAction
+    { PersonHubRef = target
+      PushPersonDialog.Mod = None
+      SpecificAction = None }
+    :> IAction
 
 let doPushNpcDialogSpecific targetHub targetDialog =
-    { PersonHubRef = targetHub; PushPersonDialog.Mod = None; SpecificAction = Some(doPushWindow targetDialog) } :> IAction
+    { PersonHubRef = targetHub
+      PushPersonDialog.Mod = None
+      SpecificAction = Some(doPushWindow targetDialog) }
+    :> IAction
 
 let doPushNpcDialogAction targetHub action =
-    { PersonHubRef = targetHub; PushPersonDialog.Mod = None; SpecificAction = Some(action) } :> IAction
+    { PersonHubRef = targetHub
+      PushPersonDialog.Mod = None
+      SpecificAction = Some(action) }
+    :> IAction
 
 let npcDialogVariant text (target: Person) =
     makeUnlockedVariant text (doPushNpcDialog target.Name)
@@ -272,7 +288,11 @@ let npcDialogActionVariant text (target: Person) spec =
 
 let findDisplayName name (s: State) =
     if (REPO_DISPLAY_NAMES_MAPPING.ContainsKey name) then
-        Some(Data.getGlobal<Person> REPO_PERSONS name, s |> Data.getGlobal<State -> string> REPO_DISPLAY_NAMES_MAPPING name)
+        Some(
+            Data.getGlobal<Person> REPO_PERSONS name,
+            s
+            |> Data.getGlobal<State -> string> REPO_DISPLAY_NAMES_MAPPING name
+        )
     else
         None
 
@@ -280,15 +300,13 @@ let findDisplayName name (s: State) =
 
 let getPeopleOnLocation name (state: State) =
     let createForPerson (p: Person) =
-        let name = 
+        let name =
             match (findDisplayName p.Name state) with
-            | Some(_, name) -> name
+            | Some (_, name) -> name
             | None -> p.DisplayName state
+
         { Pic = None
-          Variant =
-            makeUnlockedVariant
-                name
-                (doPushNpcDialog p.Name) }
+          Variant = makeUnlockedVariant name (doPushNpcDialog p.Name) }
 
     let inLocation (l: InLocation) = (l.CurrentLocation.Get state) = name
 
@@ -330,7 +348,8 @@ type LocationHubBuilder(name: string) =
           Variants = []
           StaticPersons = [] }
 
-    member __.Run(a: LocationHubStaticVariants) : LocationHub = a.Build() |> Data.save REPO_LOCATIONS name
+    member __.Run(a: LocationHubStaticVariants) : LocationHub =
+        a.Build() |> Data.save REPO_LOCATIONS name
 
     [<CustomOperation("locVariant")>]
     member __.LocVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =

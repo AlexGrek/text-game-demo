@@ -226,8 +226,6 @@ type Components() =
             | Reason (_) -> Some(Components.LockedDialogButton, el)
             | Hidden -> None
 
-        let toSimpleVariants (l: LocationHubVariantView list) = List.map (fun r -> r.Variant) l
-
         let setgs action actionText =
             setUpdatedGameState
             <| executeDialogStateUpdate
@@ -239,7 +237,10 @@ type Components() =
 
         let renderedVariants =
             List.choose renderVariant loc.Variants
-            |> List.mapi (fun i (render, d) -> render (d, s, a, setstate, setgs, i))
+            |> List.mapi (fun i (render, d) -> render (d, s, a, setstate, setgs, i+1000))
+
+        let specialKeys =
+            List.mapi (fun iter key -> Components.SpecialDialogButton(key, s, a, setstate, setgs, iter, 2) ) loc.SpecialKeys
 
         Html.div [ prop.className "location-hub-window dialog-window"
                    prop.children [ DialogTextComponents.DialogtextRenderer(
@@ -252,7 +253,10 @@ type Components() =
                                    Html.div [ prop.className "variants"
                                               prop.children (
                                                   renderedVariants
-                                                  @ [ Html.div [ prop.innerHtml "This is person" ] ]
+                                                  @ [ Html.div [ 
+                                                      prop.className "personhub-tools"
+                                                      prop.children specialKeys
+                                                   ] ]
                                               ) ] ] ]
 
     [<ReactComponent>]
@@ -342,6 +346,45 @@ type Components() =
                           | NoAnimation -> withAnimation ()
                           | _ -> () // do nothing on click when animation is playing
                       ) ]
+
+    [<ReactComponent>]
+    static member SpecialDialogButton(k: SpecialPersonKey, (s: GlobalState), a, setter, onClickAction, i, delay) =
+        let prp, specialClass, icon = 
+            match k with
+            | Additional(d) -> d, "", ""
+            | Exit(d) -> d, " exit ", "dialog-exit-icon"
+        let iconUrl =
+            UiUtils.lookupIcon icon "img/omment-info.png"
+        let withAnimation () =
+            setTimeout (fun _ -> onClickAction prp.Action prp.Text |> ignore) 250
+            |> ignore // no way to stop timeout
+
+            setter { s with Animation = VariantChosen(i) }
+
+        let addClassesByAnimation =
+            function
+            | NoAnimation ->
+                "animate__animated animate__fadeInUp animate__faster " + (sprintf "animate__delay-%ds" delay)
+            | VariantChosen (x) when x = i -> "animate__animated animate__bounceOut animate__faster"
+            | VariantChosen (_) -> "animate__animated animate__fadeOut animate__faster"
+
+        Html.button [ 
+                      prop.key s.GameState.Iteration
+                      prop.className (
+                          specialClass + " bigvariant "
+                          + (addClassesByAnimation s.Animation)
+                      )
+                      prop.onClick (fun _ ->
+                          match a with
+                          | NoAnimation -> withAnimation ()
+                          | _ -> () // do nothing on click when animation is playing
+                      ) 
+                      prop.children [
+                          Html.img [ prop.src iconUrl; prop.alt icon ]
+                          Html.span [
+                              prop.text prp.Text
+                          ]
+                      ] ]
 
     [<ReactComponent>]
     static member LockedDialogButton(prp: DialogVariantView, (s: GlobalState), a, setter, setgs, i) =

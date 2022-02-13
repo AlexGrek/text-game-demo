@@ -357,14 +357,14 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             })
         }
         window "firstTime" {
-            stxt "Я... мертва? Что происходит? Это сон? Это реальность? А где ангелочк... что? Что происходит?"
+            ptxt "Я... *!МЕРТВА?!* Что происходит? Это сон? Это реальность? А где ангелочк... что? Что происходит?"
             var (variant "проснуться" {
                 action (doMoveWithStack "init.init" [])
                 modify (facts.afterlife.Acquire)
             })
         }
         window "onceAgain" {
-            stxt "Я мертва. Снова. Неужели все начнется заново?"
+            ptxt "Я мертва. *!Снова.!* Неужели все начнется заново?"
             var (variant "проснуться" {
                 action (doMoveWithStack "init.init" [])
                 modify (facts.afterlife.Acquire)

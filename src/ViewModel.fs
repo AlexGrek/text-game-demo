@@ -103,19 +103,26 @@ let createAskAboutButton s d =
   else
     []
 
+type SpecialPersonKey = 
+  | Exit of DialogVariantView
+  | Additional of DialogVariantView
+
 type PersonHubViewModel =
     { Text: RichText
       DisplayName: string
       Design: HubDesign.HubDesign
-      Variants: DialogVariantView list }
+      Variants: DialogVariantView list
+      SpecialKeys: SpecialPersonKey list }
     static member OfPersonHub (s: State) (d: PersonHub) =
       {
         Text = d.Description s
         DisplayName = d.Name //TODO: change this to actual display name
         Design = d.Design
+        SpecialKeys = 
+          List.map (fun button -> Additional(button)) (createAskAboutButton s d)
+          @ [ Exit(DialogVariantView.OfDialogVariant s d.ExitVariant) ]
         Variants =
-          ((List.map (DialogVariantView.OfDialogVariant s) (d.Variants s))
-          @ createAskAboutButton s d)
+          ((List.map (DialogVariantView.OfDialogVariant s) (d.Variants s)))
           |> filterOutVariants id
       }
 

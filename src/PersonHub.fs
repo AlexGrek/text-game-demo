@@ -33,6 +33,7 @@ type PersonHub = {
     FactsDialogLink: string
     Allowed: State -> AllowedInteractions
     Design: HubDesign
+    ExitVariant: DialogVariant
 }
 
 let REPO_PERSON_HUBS = GlobalRepository<PersonHub>()

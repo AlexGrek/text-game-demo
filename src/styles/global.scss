@@ -6,16 +6,21 @@
 @media (max-width : 450px) {
     .panel-button {
         padding: 2pt;
-        background-color: rgba(200, 200, 200, .05);
+        background-color: rgba(200, 200, 200, .2);
         border-width: 0;
-        border-right: 1px solid grey;
-        // border-radius: 42pt;
+        border-radius: 4pt;
         margin: 1pt;
+        width: 4em;
+        height: 26pt;
         cursor: pointer;
     }
 
     .panel-button-span {
         display: none;
+    }
+
+    .panel-button-icon {
+        width: 18pt;
     }
 }
 
@@ -137,11 +142,47 @@ body::-webkit-scrollbar {
     margin: auto;
 }
 
+.personhub-tools {
+    width: 460pt;
+    border-radius: 12pt;
+    // background-color:rgba(200, 200, 200, .08);
+    // border: 1px solid grey;
+    padding: 7pt;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex-direction: row;
+}
+
+.bigvariant {
+    border-radius: 8pt;
+    border: none;
+    display: block;
+    min-height: 8em;
+    width: 102pt;
+    padding: 7pt;
+    margin: 8pt;
+    box-shadow: 0 2pt 12pt grey;
+    color: #444b43;
+    font-family: Montserrat;
+}
+
+.bigvariant img {
+    max-width: 40pt;
+    max-height: 40pt;
+    margin: 6pt;
+    opacity: .8;
+}
+
+.bigvariant.exit {
+    outline: 2px solid grey;
+}
+
 .variant {
     border-radius: 8pt;
     border: none;
     display: block;
-    width: 50em;
+    width: 460pt;
     max-width: 80%;
     min-height: 1em;
     padding: 7pt;
