@@ -496,3 +496,68 @@ body::-webkit-scrollbar {
     color: grey;
     border-left: 11pt solid grey;
 }
+
+.message-panel {
+    position: fixed;
+    right: 0px;
+    padding: 8px;
+}
+
+.message {
+    background: rgba(200, 183, 135, 0.772);
+    border: 1px solid black;
+    border-bottom: 2px solid black;
+    // border-radius: 4px;
+    z-index: 9999;
+    height: 32pt;
+    max-width: 35em;
+    min-width: 10em;
+    opacity: .8;
+    display: flex;
+    flex-direction: row;
+    box-shadow: 0 0 40px black;
+
+    animation-name: dissapearMessage;
+    animation-duration: 7000ms;
+    animation-fill-mode: forwards;
+}
+
+.message-panel:hover {
+    opacity: .2;
+}
+
+.message p {
+    font-size: 9pt;
+    margin: 0;
+    padding: 1pt;
+    margin-right: 6pt;
+}
+
+.message-icon {
+    width: 24px;
+    height: 24px;
+    margin: 8px;
+}
+
+.message .message-header {
+    font-size: 10pt;
+    font-family: Montserrat;
+}
+
+@keyframes dissapearMessage{
+    0%{
+      opacity: .1;
+      transform: translateY(-60pt);
+    }
+    3%{
+        opacity: 1;
+        transform: translateY(0pt);
+    }
+    80%{
+        opacity: .9;
+    }
+    100%{
+      display: none;
+      opacity: 0;
+    }
+  }

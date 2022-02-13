@@ -145,16 +145,39 @@ type UIView =
           PersonHubView(PersonHubViewModel.OfPersonHub s hub)
 
 let renderFacts (set: Set<string>) =
-    printfn "rendering facts: %A" (Set.toList set)
     let cast (el: string) = Data.getGlobal Facts.REPO_FACTS el
     Seq.map cast set |> Seq.toList
 
+type UpdateMessage =
+  | FactAccquired of Facts.Fact
+
+let findNewFacts (old: Facts.Fact list) (news: Facts.Fact list) =
+  let oldToMatch = List.map (fun {Facts.FactId = id} -> id) old
+  let newFacts = List.filter (fun {Facts.FactId = fact} -> List.contains fact oldToMatch |> not) news
+  printfn "New facts found: %A, searching in OLD={{%A}}; NEW={{%A}}" newFacts old news
+  newFacts
+
 type View =
     { Facts: Facts.Fact list
+      Updates: UpdateMessage list
       UI: UIView }
     static member OfState(s: State) =
         { UI = UIView.OfUiState s
-          Facts = renderFacts s.KnownFacts }
+          Facts = renderFacts s.KnownFacts
+          Updates = [] }
+
+    member this.findUpdatesWithPrev (prev: View) =
+        if (this.Facts.Length = prev.Facts.Length) then
+          []
+        else
+          findNewFacts prev.Facts this.Facts
+          |> List.map (fun x -> FactAccquired(x))
+
+    static member OfStateWithPrev (s: State) (prev: View) =
+        printfn "rendering with previous state"
+        let current = View.OfState s
+        let messages = current.findUpdatesWithPrev prev
+        { current with Updates = messages }
 
 
 type ViewOrError =
@@ -164,8 +187,24 @@ type ViewOrError =
         match s.Error with
         | Some (err) -> Error(s, err.Message)
         | None -> View(View.OfState s)
+    static member OfStateWithPrev(s: State) (prev: View) =
+        match s.Error with
+        | Some (err) -> Error(s, err.Message)
+        | None -> View(View.OfStateWithPrev s prev)
 
-let renderViewModel (s: State) = ViewOrError.OfState s
+let renderViewModel (previous: ViewOrError option) (s: State) = 
+  let prev = 
+    match previous with
+    | None -> None
+    | Some(prev) -> 
+      match prev with
+      | Error (_) -> None
+      | View (v) -> Some(v)
+  match prev with
+  | None -> ViewOrError.OfState s
+  | Some(v) -> ViewOrError.OfStateWithPrev s v
+  
+  
 
 let executeStateUpdate action historyRecord oldState =
   let s = 

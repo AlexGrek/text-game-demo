@@ -41,7 +41,7 @@ type Components() =
         let (state, setState) =
             React.useState (
                 { GameState = initialState
-                  RenderedState = renderViewModel initialState
+                  RenderedState = renderViewModel None initialState
                   Animation = NoAnimation
                   Panel = NoPanel
                   DevTools = true }
@@ -52,7 +52,7 @@ type Components() =
                 { state with
                     GameState = s
                     Animation = NoAnimation
-                    RenderedState = renderViewModel s }
+                    RenderedState = renderViewModel (Some(state.RenderedState)) s }
 
         let vm = state.RenderedState
 
@@ -69,6 +69,7 @@ type Components() =
 
                 Html.div [ prop.className "main-div"
                            prop.children [ Components.PopupPanel(state, setState)
+                                           UiUtils.PanelUtils.PopupMessagesBlock(v.Updates)
                                            Components.HeaderPanel(state, setState)
                                            uiWidgetToRender
                                            (DevTools.Components.DevToolsToolbar(
