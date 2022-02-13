@@ -61,7 +61,7 @@ type Components() =
             try
                 let uiWidgetToRender =
                     match v.UI with
-                    | DialogView (d) -> Components.DialogWindowView(d, state, state.Animation, setState, setGameState)
+                    | DialogView (d) -> Components.DialogWindowView(d, state, state.Animation, state.GameState.Animation, setState, setGameState)
                     | LocaitionHubView (hub) ->
                         Components.LocationHubView(hub, state, state.Animation, setState, setGameState)
                     | PersonHubView (hub) ->
@@ -191,6 +191,7 @@ type Components() =
         Html.div [ prop.className "location-hub-window dialog-window"
                    prop.children [ DialogTextComponents.DialogtextRenderer(
                                        animation,
+                                       State.NoAnimation,
                                        loc.Text,
                                        s.GameState,
                                        s.GameState.Iteration
@@ -243,6 +244,7 @@ type Components() =
         Html.div [ prop.className "location-hub-window dialog-window"
                    prop.children [ DialogTextComponents.DialogtextRenderer(
                                        animation,
+                                       State.NoAnimation,
                                        loc.Text,
                                        s.GameState,
                                        s.GameState.Iteration
@@ -259,6 +261,7 @@ type Components() =
             w: DialogViewModel,
             s: GlobalState,
             a: AnimationProgress,
+            uia: UIAnimation,
             setstate: GlobalState -> unit,
             setUpdatedGameState
         ) =
@@ -282,6 +285,7 @@ type Components() =
                    prop.children [ DialogTextComponents.AuthorRenderer(w.Actor)
                                    DialogTextComponents.DialogtextRenderer(
                                        animation,
+                                       uia,
                                        w.Text,
                                        s.GameState,
                                        s.GameState.Iteration

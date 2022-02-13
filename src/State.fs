@@ -25,7 +25,7 @@ type ErrorInfo = {
 type UIAnimation = 
     | NoAnimation
     | Success
-    | Failure
+    | Fail
     | Warning
     | Shock
     | Custom of string
@@ -74,7 +74,7 @@ let private setUIDialogRef dw =
     DialogMode({ Reference = dw })
 
 let private iterate s = 
-    { s with Iteration = s.Iteration + 1; Animation = NoAnimation}
+    { s with Iteration = s.Iteration + 1; Animation = NoAnimation }
 
 let gotoDialogWindow refs s =
     { iterate s with UI = changeUIDialogWindow refs s.UI }
@@ -132,5 +132,7 @@ let ands cond1 cond2 state =
 let ors cond1 cond2 state =
     (cond1 state) || (cond2 state)
 
+let withAnimation a s =
+    {s with Animation = a}
     
 let gameVersion = "0.1.4 alpha"

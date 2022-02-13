@@ -3,6 +3,7 @@ namespace App
 open Feliz
 open ViewModel
 open RichText
+open State
 
 type DialogTextComponents() =
     static let getIconForAuthor author =
@@ -12,8 +13,12 @@ type DialogTextComponents() =
         | _ -> "img/rhombus.png"
 
     [<ReactComponent>]
-    static member DialogtextRenderer(animation, text: RichText, s: State.State, iteration: int) =
-        Html.div [ prop.className "dialog-text"
+    static member DialogtextRenderer(animation, gameAnimation: UIAnimation, text: RichText, s: State.State, iteration: int) =
+        let UIAnimationClass = 
+            match gameAnimation with
+            | Warning -> "animate__shakeX animate__animated"
+            | _ -> ""
+        Html.div [ prop.className ("dialog-text " + UIAnimationClass)
                    prop.key iteration
                    prop.children [ (RichTextComponents.RichTextRenderer(text, animation)) ] ]
 

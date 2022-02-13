@@ -61,11 +61,16 @@ let build () =
     let w3 =
         window "коридор" {
             onEntry 
-                (fun s -> 
+                ((fun s -> 
                     if (chars.World.CanStartActionInTheFlat s && not (chars.World.PoliceArriving.Get s)) then 
                         chars.World.PoliceArrive s 
                     else 
                         s)
+                    >> (fun s -> 
+                            if (chars.World.PoliceCameAlready s) then
+                                withAnimation Warning s
+                            else
+                                s))
 
             ctxt
                 (chars.World.PoliceCameAlready >> not)

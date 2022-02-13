@@ -231,6 +231,21 @@ type npcBuilder(person: Person) =
     member __.Allow(loc: NpcBuilderState, a: AllowedInteractions) = 
         { loc with Allowed = s a }
 
+    [<CustomOperation("start")>]
+    member __.Strt(loc: NpcBuilderState, d: State -> Actions.Jump option) = 
+        { loc with StartingDialog = d }
+
+    [<CustomOperation("startonce")>]
+    member __.StrtOnce(loc: NpcBuilderState, targetLink: string) = 
+        let reference = Data.UReference.Parse targetLink
+        let jump = {Actions.Jump.TargetRef = reference; Mod = Some(meetPerson person)}
+        { loc with StartingDialog = 
+                            (fun s -> 
+                                if (doesKnowPerson person s) then
+                                    None
+                                else
+                                    Some(jump)) }
+
     member __.Run(loc: NpcBuilderState) =
         printfn "initializing NPC %s" loc.SystemName
         loc.Build person

@@ -52,10 +52,18 @@ type PolicemanJoe() =
 
 type Babka() =
     inherit Person("babka", "Какая-то старая бабка")
-    let n = "joe"
+    let n = "babka"
     override x.Roles() = 
         RoleModel.RoleModel([
             InLocation(x.Name, "камера")
+            Talker(x.Name, DefaultBasicAnswers, DontCare)
+        ])
+
+type BasicPerson(id, displayName, located) =
+    inherit Person(id, displayName)
+    override x.Roles() = 
+        RoleModel.RoleModel([
+            InLocation(x.Name, located)
             Talker(x.Name, DefaultBasicAnswers, DontCare)
         ])
 
@@ -92,6 +100,7 @@ type Characters(facts: GameDvaFacts.GameDvaFacts) =
     member val Myself = saved myself
     member val PolicemanJoe = saved <| PolicemanJoe()
     member val Babka = saved <| Babka()
+    member val Botan = saved <| BasicPerson("botan", "Парень в очках", "камера")
     member val World = World(facts)
 
     member x.DeathReset(s: State.State) =

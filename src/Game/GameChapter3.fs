@@ -408,3 +408,25 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             var (popVariant "отойти")
         }
     ] |> ignore
+
+    npc chars.Botan {
+        allow PersonHub.AllowedInteractions.OnlyTalk
+        startonce "botan.initial"
+        stxt "Бабка не выглядит дружелюбной. Она похожа на старую циганку, которая может оставить тебя без денег на вокзале."
+        var ("подойти" --- "бабка.идиты")
+    } |> ignore
+
+    createDialog "botan" [
+        window "initial" {
+            // actor chars.Botan.Name
+            stxt "Молодой парень в очках сидит и бубнит что-то себе под нос, не обращая никакого внимания на всех вокруг. Создает впечатление психа."
+            var (popVariant "отойти")
+            var ("попробовать поговорить" -- "поговорить")
+        }
+        window "поговорить" {
+            actor chars.Botan.Name
+            stxt "Слишком много вопросов. Слишком много вопросов. Слишком много вопросов. Слишком много..."
+            var (popVariant "отойти")
+            var (popVariant "точно отойти, ну его")
+        }
+    ] |> ignore

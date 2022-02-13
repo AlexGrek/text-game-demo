@@ -42,6 +42,12 @@ and execute (a: Actions.IAction) (s: State) =
         let updatedState = a.Exec s
         match updatedState.UI with
         | DialogMode(d) -> executeCurrentDialogWindow updatedState
+        | PersonHubMode(p) -> 
+            let person = 
+                getGlobal<PersonHub.PersonHub> PersonHub.REPO_PERSON_HUBS p.PersonHubReference
+            match (person.StartingDialog updatedState) with
+            | None -> updatedState
+            | Some(act) -> execute act updatedState
         | _ -> updatedState // other modes do not require execution for now
     with
         | Failure(f) -> {s with Error = Some({Message = f})}
