@@ -135,4 +135,4 @@ let ors cond1 cond2 state =
 let withAnimation a s =
     {s with Animation = a}
     
-let gameVersion = "0.1.4 alpha"
+let gameVersion = "0.2.1 alpha"

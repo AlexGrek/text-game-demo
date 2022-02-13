@@ -296,7 +296,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             Как остановить лифт, где тут кнопка..."""
             var ("меня сковал страх" -- "последний3")
             var ("нажать кнопку \"стоп\"" -- "последний3")
-            var (hidden (facts.afterlife.IsKnown) "в этот раз я точно покажу ему" {
+            var (hidden (State.ands facts.afterlife.IsKnown facts.strangerKillsMe.IsKnown) "в этот раз я точно покажу ему" {
                 action (doGoToWindow "последний4")
             })
         }
