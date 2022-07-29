@@ -12,6 +12,8 @@ type Property(path) =
 
     // member x.GetRaw state =
     //     state.Data.Item path
+    member x.GetPath() = 
+        path
 
     member x.GetRawOption(state: State) =
         if (Map.containsKey path state.Data) then
@@ -47,6 +49,50 @@ type BoolProperty(path, defv) =
     member x.GetOrFalse = x.GetOr false
     member x.GetOrTrue = x.GetOr true
     static member Personal name propName def = BoolProperty(name -. propName, def)
+
+let asInt (f: obj) = f :?> int
+
+type IntProperty(path: string, defaultValue: int) =
+    inherit Property(path)
+    member x.DefaultValue = defaultValue
+    member x.Set value state = 
+        x.SetRaw(value :> obj) state
+        
+    member x.Get(state: State) =
+        Option.map asInt (x.GetRawOption state)
+        |> Option.defaultValue x.DefaultValue
+
+    member x.Inc(state: State) =
+        let old = x.Get(state)
+        let newi = old + 1
+        x.Set(newi) state
+
+    member x.Dec(state: State) =
+        let old = x.Get(state)
+        let newi = old - 1
+        x.Set(newi) state
+
+    member x.Add num state =
+        let old = x.Get(state)
+        let newi = old + num
+        x.Set(newi) state
+
+    member x.Update updater state =
+        let old = x.Get(state)
+        let newi: int = updater old
+        x.Set(newi) state
+
+    member x.IsGreaterThan num state =
+        x.Get(state) > num
+
+    member x.IsLessThan num state =
+        x.Get(state) < num
+
+    member x.Equals num state =
+        x.Get(state) = num
+
+    static member Personal name propName dval =
+        IntProperty(name -. propName, dval)
 
 type IterationCounter(path: string) =
     inherit Property(path)

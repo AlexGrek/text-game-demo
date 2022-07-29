@@ -59,14 +59,6 @@ type Babka() =
             Talker(x.Name, DefaultBasicAnswers, DontCare)
         ])
 
-type BasicPerson(id, displayName, located) =
-    inherit Person(id, displayName)
-    override x.Roles() = 
-        RoleModel.RoleModel([
-            InLocation(x.Name, located)
-            Talker(x.Name, DefaultBasicAnswers, DontCare)
-        ])
-
 type World(facts: GameDvaFacts.GameDvaFacts) =
     let name = "world"
 

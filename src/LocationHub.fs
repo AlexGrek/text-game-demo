@@ -20,7 +20,7 @@ type LocationHub = {
     Design: HubDesign
 }
 
-let REPO_LOCATIONS = GlobalRepository<LocationHub>()
+let REPO_LOCATION_HUBS = GlobalRepository<LocationHub>()
 
 let makeLocationVariant var pic =
     {Pic = Some(pic); Variant = var}

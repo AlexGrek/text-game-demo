@@ -7,7 +7,7 @@ open Fable.Core.JsInterop
 
 importSideEffects "./styles/global.scss"
 
-GameDva.init()
+VisualNovelGame.initThis()
 
 ReactDOM.render(
     Components.HelloWorld(),

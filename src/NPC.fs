@@ -9,6 +9,12 @@ open PersonHub
 open Actions
 open LocationHub
 
+type PersonConfiguration = {
+        Person: Person
+        NPC: State -> string
+        DisplayName: State -> string
+        }
+
 type BasicAnswers =
     { DontKnow: string list
       Shock: string list
@@ -49,9 +55,11 @@ type Talker(name: string, basicAnswers: BasicAnswers, defaultReaction: Reaction)
     inherit RoleModel.Role(TALKER_ROLE_ID)
 
     let knownFactsProp =
-        ListStringProperty.Personal name "knownFacts"
+        ListStringProperty.Personal name "known_facts"
 
     member val KnownFactsProperty = knownFactsProp
+    member val CurrentNpc =
+        StringProperty.Personal name "current_npc_id" ""
 
     member x.DoesKnow fact state =
         x.KnownFactsProperty.Contains fact state
@@ -81,10 +89,17 @@ let createAskAboutDialog (sysName: string) (talker: Talker) (ans: Map<string, Re
     let generateAvailableFacts =
         let createFactVariant (fid: string) =
             let reaction =
+                printfn "map: %A" ans
+                printfn "fid: %s" fid
+                printfn "map contains key: %A" <| Map.containsKey fid ans
+                printfn "talker: %A" talker
                 if (Map.containsKey fid ans) then
                     ans.[fid]
                 else
                     talker.DefaultReaction
+
+            
+            printfn "reaction: %A" reaction
 
             let pushToWindow target =
                 (pushWindowRef { D = dialogName; W = target }) :> Actions.IAction
@@ -120,7 +135,7 @@ let createAskAboutDialog (sysName: string) (talker: Talker) (ans: Map<string, Re
           Actor = None
           Text =
             (stxt
-             <| "Спросить, что " + talker.Name + " думает о...")
+             <| "Поговорить о...")
           Variants = s (endDialog :: variants)
           OnEntry = None }
 
@@ -134,15 +149,16 @@ let createAskAboutDialog (sysName: string) (talker: Talker) (ans: Map<string, Re
 let asTalker (p: Person) =
     (p.Roles().As TALKER_ROLE_ID) :?> Talker
 
-let REPO_DISPLAY_NAMES_MAPPING = Data.GlobalRepository<State -> string>()
+let REPO_PERSON_CONFIGS = 
+    Data.GlobalRepository<PersonConfiguration>()
 
-let saveDisplayNameMapping personID mapping =
-    Data.save<State -> string> REPO_DISPLAY_NAMES_MAPPING personID mapping
-    |> ignore
+let savePersonConfig personID =
+    Data.save<PersonConfiguration> REPO_PERSON_CONFIGS personID
+    >> ignore
 
 type NpcBuilderState =
     { SystemName: string
-      DisplayName: State -> string
+      DialogName: string
       FactReactions: Map<string, Reaction>
       Variants: State -> DialogVariant list
       StaticVariants: DialogVariant list
@@ -154,12 +170,13 @@ type NpcBuilderState =
     member x.Build person =
         let talker = asTalker person
 
+        let dialogName =
+            x.SystemName + "@" + x.DialogName
+
         let askAbout =
-            createAskAboutDialog x.SystemName talker x.FactReactions
+            createAskAboutDialog dialogName talker x.FactReactions
 
-        saveDisplayNameMapping x.SystemName x.DisplayName
-
-        { Name = x.SystemName
+        { Name = dialogName
           Description = x.Description
           Design = HubDesign.defaultDesign
           FactsDialogLink = askAbout
@@ -167,17 +184,17 @@ type NpcBuilderState =
           Allowed = x.Allowed
           ExitVariant = x.ExitVariant
           Variants = (fun s -> x.Variants s @ x.StaticVariants) }
-        |> Data.save<PersonHub> REPO_PERSON_HUBS x.SystemName
+        |> Data.save<PersonHub> REPO_PERSON_HUBS dialogName
 
 
-type npcBuilder(person: Person) =
+type npcBuilder(person: Person, dialogName) =
     let name =
         let talker = asTalker person
         talker.Name
 
     member __.Yield(_) : NpcBuilderState =
         { SystemName = person.Name
-          DisplayName = s person.DefaultDisplayName
+          DialogName = dialogName
           FactReactions = Map.empty
           ItemGivenReactions = Map.empty
           Allowed = s AllowedInteractions.All
@@ -187,17 +204,11 @@ type npcBuilder(person: Person) =
           ExitVariant = (popVariant "закончить разговор")
           Description = stxt name }
 
-    [<CustomOperation("name")>]
-    member __.Name(nbs: NpcBuilderState, name: State -> string) = { nbs with DisplayName = name }
-
     [<CustomOperation("exittext")>]
     member __.exitVariantName(nbs: NpcBuilderState, name: string) = { nbs with ExitVariant = (popVariant name) }
 
     [<CustomOperation("exit")>]
     member __.exitVariant(nbs: NpcBuilderState, ex: DialogVariant) = { nbs with ExitVariant = ex }
-
-    [<CustomOperation("staticname")>]
-    member __.Name(nbs: NpcBuilderState, name: string) = { nbs with DisplayName = s name }
 
     [<CustomOperation("fact")>]
     member __.Fact(nbs: NpcBuilderState, name: string, reaction: Reaction) =
@@ -254,16 +265,48 @@ type npcBuilder(person: Person) =
                         Some(jump)) }
 
     member __.Run(loc: NpcBuilderState) =
-        printfn "initializing NPC %s" loc.SystemName
         loc.Build person
 
-let npc person = npcBuilder person
+let npc person dialogName = npcBuilder (person, dialogName)
 
-let doPushNpcDialog target =
-    { PersonHubRef = target
+let doPushNpcDialog (targetNPC: string) =
+    { PersonHubRef = targetNPC
       PushPersonDialog.Mod = None
       SpecificAction = None }
     :> IAction
+
+let doFindNpcDialog personName =
+    let lookupConfig personName =
+        Data.getOrNone REPO_PERSON_CONFIGS personName
+
+    let lookupAllNpcs personName =
+        let lst = 
+            let key = personName + "@"
+            Data.dumpGlobalKeys REPO_PERSON_HUBS
+            |> List.filter (fun (s: string) -> s.StartsWith(key))
+        if List.isEmpty lst then
+            failwithf "Cannot find at least one NPC or PERSON_CONFIG for person '%s'" personName
+        if List.length lst > 1 then
+            printfn "WARNING: multiple NPC found for person '%s', please specify one" personName
+        lst
+
+    let findPersonNpc state =
+        let person = Data.getGlobal REPO_PERSONS personName
+        let talker = asTalker person
+        let currentNpcId = talker.CurrentNpc.Get state
+        if currentNpcId = "" then
+            match (lookupConfig personName) with
+            | Some(config) ->
+                printfn "Using person config for '%s' to find NPC" personName 
+                config.NPC state
+            | None ->
+                printfn "Using global NPC lookup to find NPC for '%s'" personName
+                List.head (lookupAllNpcs personName)
+        else
+            printfn "Using Talker.CurrentNpc to find NPC for '%s'" personName
+            currentNpcId
+
+    { Person = personName; PersonDecider.Decider = findPersonNpc; Mod = None; SpecificAction = None }
 
 let doPushNpcDialogSpecific targetHub targetDialog =
     { PersonHubRef = targetHub
@@ -278,7 +321,7 @@ let doPushNpcDialogAction targetHub action =
     :> IAction
 
 let npcDialogVariant text (target: Person) =
-    makeUnlockedVariant text (doPushNpcDialog target.Name)
+    makeUnlockedVariant text (doFindNpcDialog target.Name)
 
 let npcDialogSpecificVariant text (target: Person) spec =
     makeUnlockedVariant text (doPushNpcDialogSpecific target.Name spec)
@@ -287,14 +330,23 @@ let npcDialogActionVariant text (target: Person) spec =
     makeUnlockedVariant text (doPushNpcDialogAction target.Name spec)
 
 let findDisplayName name (s: State) =
-    if (REPO_DISPLAY_NAMES_MAPPING.ContainsKey name) then
+    if (REPO_PERSON_CONFIGS.ContainsKey name) then
+        let config = 
+            (Data.getGlobal<PersonConfiguration> REPO_PERSON_CONFIGS name)
+        let displayName = config.DisplayName s
         Some(
-            Data.getGlobal<Person> REPO_PERSONS name,
-            s
-            |> Data.getGlobal<State -> string> REPO_DISPLAY_NAMES_MAPPING name
+             Data.getGlobal<Person> REPO_PERSONS name,
+             displayName
         )
     else
         None
+
+let mustFindDisplayName name state =
+    match (findDisplayName name state) with
+    | Some(name) -> name
+    | None -> 
+        let person = Data.getGlobal REPO_PERSONS name
+        (person, person.DisplayName state)
 
 // LOCATION creation is also part of NPC engine
 
@@ -349,7 +401,7 @@ type LocationHubBuilder(name: string) =
           StaticPersons = [] }
 
     member __.Run(a: LocationHubStaticVariants) : LocationHub =
-        a.Build() |> Data.save REPO_LOCATIONS name
+        a.Build() |> Data.save REPO_LOCATION_HUBS name
 
     [<CustomOperation("locVariant")>]
     member __.LocVar(loc: LocationHubStaticVariants, variant: DialogVariant) : LocationHubStaticVariants =
@@ -411,3 +463,36 @@ type LocationHubBuilder(name: string) =
         { loc with Variants = variant :: loc.Variants }
 
 let location name = LocationHubBuilder name
+
+type BasicPerson(id, displayName, located) =
+    inherit Person(id, displayName)
+    override x.Roles() = 
+        RoleModel.RoleModel([
+            InLocation(x.Name, located)
+            Talker(x.Name, DefaultBasicAnswers, DontCare)
+        ])
+
+type PersonConfigurationBuilder(person: Person) =
+    let name = person.Name
+
+    member __.Yield(_) : PersonConfiguration =
+        { Person = person
+          NPC = s ""
+          DisplayName = s person.DefaultDisplayName }
+
+    member __.Run(a: PersonConfiguration) : PersonConfiguration =
+        Data.save<PersonConfiguration> REPO_PERSON_CONFIGS name a
+
+    [<CustomOperation("name")>]
+    member __.Name(p: PersonConfiguration, nameGenerator: State -> string) : PersonConfiguration =
+        { p with DisplayName = nameGenerator }
+
+    [<CustomOperation("hub")>]
+    member __.Name(p: PersonConfiguration, npc: PersonHub) : PersonConfiguration =
+        { p with NPC = s npc.Name }
+    
+    [<CustomOperation("hubName")>]
+    member __.Name(p: PersonConfiguration, hubName: string) : PersonConfiguration =
+        { p with NPC = s <| p.Person.Name + "@" + hubName }
+
+let personConfig person = PersonConfigurationBuilder(person)

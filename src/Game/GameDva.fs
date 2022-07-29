@@ -523,6 +523,6 @@ type GameDvaRunner() =
         member _.InitialState() = INITIAL_STATE
         member _.Build() = build ()
 
-let init () =
+let initGameDva () =
     let runner = GameDvaRunner()
     Engine.setGameRunner runner

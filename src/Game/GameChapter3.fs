@@ -38,17 +38,29 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
             })
         }
     ] |> ignore
+
+    createDialog "joereact" [
+        windowWithPerson "deadBodyFoundReactOnce" chars.PolicemanJoe {
+            ptxt "Да ты что, я в *!шоке!*."
+            var (popVariant "Ясно")
+        }
+        window "deadBodyFoundReactSecond" {
+            stxt "Ты это уже спрашивала, дура!"
+            var (popVariant "Простите")
+        }
+    ] |> ignore
     
-    npc chars.PolicemanJoe {
+    npc chars.PolicemanJoe  "a"{
         stxt "Полицейський Джо"
         fact
             facts.afterlife
             DontBelieve
-        name (fun s ->
-            if (chars.PolicemanJoe.UserKnowsHisName.IsKnown s) then
-                "Полицейський Джо"
-            else 
-                "Полицейський" )
+        fact
+            facts.deadBodyFound
+            (Do((doOnce "askedAbputDeadBodyPoliceman"
+                (doPushWindow "joereact.deadBodyFoundReactOnce")
+                (doPushWindow "joereact.deadBodyFoundReactSecond"))))
+
         variants (
             fun s -> 
                 if (chars.PolicemanJoe.ThinksIAmCooper.Get s) then
@@ -67,6 +79,14 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
                         }
                     ]
         )
+    } |> ignore
+
+    personConfig chars.PolicemanJoe {
+        name (fun s ->
+            if (chars.PolicemanJoe.UserKnowsHisName.IsKnown s) then
+                "Полицейський Джо"
+            else 
+                "Полицейський" )
     } |> ignore
 
     createDialog "joe_chat_arrested" [
@@ -395,7 +415,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
         тебя нашли на месте убийства. К тому же, я не помню ничего, как я буду защищаться, если что?"""
     } |> ignore
 
-    npc chars.Babka {
+    npc chars.Babka "b"{
         allow PersonHub.AllowedInteractions.Nothing
         stxt "Бабка не выглядит дружелюбной. Она похожа на старую циганку, которая может оставить тебя без денег на вокзале."
         var ("подойти" --- "бабка.идиты")
@@ -409,7 +429,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
         }
     ] |> ignore
 
-    npc chars.Botan {
+    npc chars.Botan "a"{
         allow PersonHub.AllowedInteractions.OnlyTalk
         startonce "botan.initial"
         stxt "Бабка не выглядит дружелюбной. Она похожа на старую циганку, которая может оставить тебя без денег на вокзале."

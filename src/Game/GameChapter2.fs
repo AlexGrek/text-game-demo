@@ -337,7 +337,7 @@ let init(facts: GameDvaFacts.GameDvaFacts, chars: GameDvaCharacters.Characters) 
     createDialog "смерть" [
         window "init" {
             onEntry (chars.DeathReset)
-            rand [ 
+            rand [
                 "Твое время еще не пришло..."
                 "Все еще впереди..."
                 "Используй свой шанс..."

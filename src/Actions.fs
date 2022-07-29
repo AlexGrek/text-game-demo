@@ -158,7 +158,7 @@ type PushPersonDialog =
 
         member x.Exec state =
             let newState = 
-                state 
+                state
                 |> Option.defaultValue id x.Mod
                 |> pushPerson x.PersonHubRef
             match x.SpecificAction with
@@ -174,7 +174,7 @@ type PushPersonDialog =
             { x with PushPersonDialog.Mod = newMod } :> IAction
 
 type ChangeLocation =
-    { LocationRef: string; Mod: Option<State -> State> }
+    { LocationRef: string; Mod: Option<State -> State>; }
     interface IAction with
         member this.Links() : Link list = [ PushLocationLink(this.LocationRef) ]
 
@@ -189,6 +189,29 @@ type ChangeLocation =
                 | None -> Some(m)
                 | Some(old) -> Some(m >> old)
             { x with ChangeLocation.Mod = newMod } :> IAction
+
+type PersonDecider = 
+    { Person: string; Decider: State -> string; Mod: Option<State -> State>; SpecificAction: IAction option }
+    interface IAction with
+        member this.Links() : Link list = [ PushPersonLink(this.Person) ]
+
+        member x.Exec state =
+            let npcRef = x.Decider state
+            let newState = 
+                state
+                |> Option.defaultValue id x.Mod
+                |> pushPerson npcRef
+            match x.SpecificAction with
+            | Some(act) ->
+                act.Exec newState
+            | None -> newState
+
+        member x.ComposeAfter m = 
+            let newMod =
+                match x.Mod with
+                | None -> Some(m)
+                | Some(old) -> Some(m >> old)
+            { x with PersonDecider.Mod = newMod } :> IAction
 
 let private linksFromTwo (a: IAction) (b: IAction) =
     List.concat [ a.Links(); b.Links() ]

@@ -62,7 +62,7 @@ type Components() =
                 let uiWidgetToRender =
                     match v.UI with
                     | DialogView (d) -> Components.DialogWindowView(d, state, state.Animation, state.GameState.Animation, setState, setGameState)
-                    | LocaitionHubView (hub) ->
+                    | LocationHubView (hub) ->
                         Components.LocationHubView(hub, state, state.Animation, setState, setGameState)
                     | PersonHubView (hub) ->
                         Components.PersonHubView(hub, state, state.Animation, setState, setGameState)

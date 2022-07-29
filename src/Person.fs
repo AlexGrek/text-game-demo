@@ -3,6 +3,7 @@ module Person
 open RoleModel
 open Data
 open State
+open Location
 
 type Person(name: string, dispalyName: string) =
     abstract member Roles: unit -> RoleModel
@@ -14,9 +15,9 @@ type Person(name: string, dispalyName: string) =
 
 let IN_LOCATION_ID = "inLocation"
 
-type InLocation(name: string, defaultLocation: string) =
+type InLocation(name: string, defaultLocation: Location) =
     inherit Role(IN_LOCATION_ID)
-    member val CurrentLocation = Props.StringProperty.Personal name "currentLocation" defaultLocation
+    member val CurrentLocation = Props.StringProperty.Personal name "currentLocation" defaultLocation.Name
 
 let asInLocation (p: Person) =
     Option.map (fun (x: Role) -> x :?> InLocation) (p.Roles().AsOption IN_LOCATION_ID)

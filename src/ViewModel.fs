@@ -128,7 +128,7 @@ type PersonHubViewModel =
 
 type UIView =
     | DialogView of DialogViewModel
-    | LocaitionHubView of LocationHubViewModel
+    | LocationHubView of LocationHubViewModel
     | PersonHubView of PersonHubViewModel
     static member OfUiState(s: State) =
         match s.UI with
@@ -138,8 +138,8 @@ type UIView =
             let window = dialog.DialogWindows.[ref.W]
             DialogView(DialogViewModel.OfDialogWindow s window)
         | LocationHubMode(loc) ->
-          let hub = Data.getGlobal REPO_LOCATIONS loc.LocReference
-          LocaitionHubView(LocationHubViewModel.OfLocationHub s hub)
+          let hub = Data.getGlobal REPO_LOCATION_HUBS loc.LocReference
+          LocationHubView(LocationHubViewModel.OfLocationHub s hub)
         | PersonHubMode(personHub) ->
           let hub = Data.getGlobal REPO_PERSON_HUBS personHub.PersonHubReference
           PersonHubView(PersonHubViewModel.OfPersonHub s hub)
@@ -154,7 +154,6 @@ type UpdateMessage =
 let findNewFacts (old: Facts.Fact list) (news: Facts.Fact list) =
   let oldToMatch = List.map (fun {Facts.FactId = id} -> id) old
   let newFacts = List.filter (fun {Facts.FactId = fact} -> List.contains fact oldToMatch |> not) news
-  printfn "New facts found: %A, searching in OLD={{%A}}; NEW={{%A}}" newFacts old news
   newFacts
 
 type View =

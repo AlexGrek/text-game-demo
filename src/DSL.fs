@@ -78,7 +78,9 @@ type WindowBuilder(name: string, defaultActor: string option) =
 
 let window x = WindowBuilder(x, None)
 
-let windowWithActor x act = WindowBuilder(x, Some(act))
+let windowWithActor x (act: string) = WindowBuilder(x, Some(act))
+
+let windowWithPerson x (act: Person) = WindowBuilder(x, Some(act.Name))
 
 type VariantBuilder(text: string, createVariant: string -> IAction -> DialogVariant) =
     member __.Yield(_) : DialogVariantGen =

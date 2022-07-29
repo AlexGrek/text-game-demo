@@ -26,6 +26,8 @@ type GlobalRepository<'a> () =
 
     member instance.Add key value = instance.Repo.Add(key, value)
 
+    member instance.AddOrChange key value = instance.Repo.[key] <- value
+
     member instance.Keys() = Seq.toList <| instance.Repo.Keys
 
     member instance.Vals() = instance.Repo.Values
@@ -52,7 +54,22 @@ let getGlobal<'a> (repo: GlobalRepository<'a>) key =
         repo.Get key
     else
         failwith
-        <| sprintf "Missing global key <<%A>>\n Dump keys: %A" key (dumpGlobalKeys<'a> repo)
+        <| sprintf "Missing global key '%A'\n Dump keys: %A" key (dumpGlobalKeys<'a> repo)
+
+let patch<'a> (repo: GlobalRepository<'a>) func key =
+    if (repo.ContainsKey key) then
+        let prev = repo.Get key
+        let updated = func prev
+        repo.AddOrChange key updated
+    else
+        failwith
+        <| sprintf "Missing global key '%A'\n Dump keys: %A" key (dumpGlobalKeys<'a> repo)
+
+let getOrNone<'a> (repo: GlobalRepository<'a>) key =
+    if (repo.ContainsKey key) then
+      Some(repo.Get key)
+    else
+      None
 
 let resetGlobal<'a> (repo: GlobalRepository<'a>) = repo.Reset ()
 

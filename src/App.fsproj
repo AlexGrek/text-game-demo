@@ -13,9 +13,11 @@
     <Compile Include="Actions.fs" />
     <Compile Include="Dialog.fs" />
     <Compile Include="HubDesign.fs" />
+    <Compile Include="Location.fs" />
     <Compile Include="LocationHub.fs" />
     <Compile Include="PersonHub.fs" />
     <Compile Include="Engine.fs" />
+    <Compile Include="Serialization.fs" />
     <Compile Include="RoleModel.fs" />
     <Compile Include="Person.fs" />
     <Compile Include="DSL.fs" />
@@ -25,18 +27,22 @@
     <Compile Include="ViewModel.fs" />
     <Compile Include="Game/GameDvaFacts.fs" />
     <Compile Include="GameDvaCharacters.fs" />
-    <Compile Include="Game\GameChapter2.fs" />
-    <Compile Include="Game\GameChapter3.fs" />
+    <Compile Include="VisualNovelGame\VisualNovelFacts.fs" />
+    <Compile Include="VisualNovelGame\VisualNovelChars.fs" />
+    <Compile Include="VisualNovelGame\Chapter00Debug.fs" />
+    <Compile Include="VisualNovelGame\Chapter01.fs" />
+    <Compile Include="VisualNovelGame/VisualNovelEntry.fs" />
+    <Compile Include="Game/GameChapter2.fs" />
+    <Compile Include="Game/GameChapter3.fs" />
     <Compile Include="Game/GameDva.fs" />
-    <Compile Include="Serialization.fs" />
     <Compile Include="UserInterface/RichTextRenderer.fs" />
-    <Compile Include="UserInterface\DialogTextRenderer.fs" />
+    <Compile Include="UserInterface/DialogTextRenderer.fs" />
     <Compile Include="UiUtils.fs" />
     <Compile Include="FactsRenderer.fs" />
     <Compile Include="HistoryRenderer.fs" />
     <Compile Include="DebuggerRenderer.fs" />
-    <Compile Include="UserInterface\DevTools.fs" />
-    <Compile Include="UserInterface\Components.fs" />
+    <Compile Include="UserInterface/DevTools.fs" />
+    <Compile Include="UserInterface/Components.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

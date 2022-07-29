@@ -39,7 +39,7 @@ type PersonHub = {
 let REPO_PERSON_HUBS = GlobalRepository<PersonHub>()
 
 let makePersonVariant var pic =
-    {Pic = Some(pic); Variant = var}
+    { Pic = Some(pic); Variant = var }
 
 let makePicturelessPersonVariant var =
-    {PersonHubVariant.Pic = None; Variant = var}
+    { PersonHubVariant.Pic = None; Variant = var }

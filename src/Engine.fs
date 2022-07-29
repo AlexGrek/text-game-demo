@@ -23,7 +23,7 @@ let lookupCurrentLocation s =
     | LocationHubMode l -> (l.LocReference)
     | s -> failwith (sprintf "Cannot get current location window while in %A" s)
     let reference = getFromUi s.UI
-    getGlobal<LocationHub.LocationHub> REPO_LOCATIONS reference
+    getGlobal<LocationHub.LocationHub> REPO_LOCATION_HUBS reference
     
 
 let rec executeCurrentDialogWindow s =

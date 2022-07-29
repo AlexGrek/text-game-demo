@@ -2,6 +2,8 @@ module State
 
 open Data
 
+let gameVersion = "0.2.1 alpha"
+
 type DialogState = { Reference: UReference }
 type LocationHubState = { LocReference: string }
 type PersonHubState = { PersonHubReference: string }
@@ -41,7 +43,8 @@ type State =
       KnownPersons: Map<string, Set<string>>
       Iteration: int
       Data: Map<string, obj>
-      Error: ErrorInfo option }
+      Error: ErrorInfo option
+      Version: string }
 
 let makeInitialStateInDialog (r: UReference) =
     { UI = DialogMode({ Reference = r })
@@ -54,7 +57,8 @@ let makeInitialStateInDialog (r: UReference) =
       KnownPersons = Map.empty
       Iteration = 0
       Error = None
-      Data = Map.empty }
+      Data = Map.empty
+      Version = gameVersion }
 
 let currentDialogRef s =
     match s.UI with
@@ -134,5 +138,3 @@ let ors cond1 cond2 state =
 
 let withAnimation a s =
     {s with Animation = a}
-    
-let gameVersion = "0.2.1 alpha"
