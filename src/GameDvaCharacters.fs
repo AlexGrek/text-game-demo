@@ -97,10 +97,7 @@ let saved (pers: 'a) =
 
 type Characters(facts: GameDvaFacts.GameDvaFacts) =
     let myself = Myself()
-    member val Myself = saved myself
-    member val PolicemanJoe = saved <| PolicemanJoe()
-    member val Babka = saved <| Babka()
-    member val Botan = saved <| BasicPerson("botan", "Парень в очках", "камера")
+    member val Katya = saved myself
     member val World = World(facts)
 
     member x.DeathReset(s: State.State) =
